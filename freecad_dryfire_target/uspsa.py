@@ -264,7 +264,6 @@ def create_center_stripe_target(
     hard_cover_face = face_layer.common(stripe_mask)
     cardboard_face = face_layer.cut(hard_cover_face)
 
-
     effective_groove_depth = min(
         groove_depth,
         face_layer_thickness - 0.05,
@@ -277,6 +276,27 @@ def create_center_stripe_target(
         groove_width,
         effective_groove_depth,
         face="bottom",
+    )
+
+    rotation_center = App.Vector(0, 0, 0)
+    rotation_axis = App.Vector(0, 0, 1)
+
+    back_shape.rotate(
+        rotation_center,
+        rotation_axis,
+        180,
+    )
+
+    cardboard_face.rotate(
+        rotation_center,
+        rotation_axis,
+        180,
+    )
+
+    hard_cover_face.rotate(
+        rotation_center,
+        rotation_axis,
+        180,
     )
 
     back = document.addObject(
@@ -306,10 +326,7 @@ def create_center_stripe_target(
     document.recompute()
 
     view = Gui.activeDocument().activeView()
-
     view.viewBottom()
-    view.viewRotateRight()
-    view.viewRotateRight()
     view.fitAll()
 
     return back, cardboard, hard_cover
