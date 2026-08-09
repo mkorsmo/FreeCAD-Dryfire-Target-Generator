@@ -1,6 +1,7 @@
 import FreeCAD as App
 import FreeCADGui as Gui
 
+from freecad_dryfire_target.dialog import TargetSettingsDialog
 from freecad_dryfire_target.geometry import (
     make_extruded_polygon,
     make_polyline_groove,
@@ -8,11 +9,14 @@ from freecad_dryfire_target.geometry import (
 )
 
 
-SCALE = 1 / 3
+TARGET_WIDTH = 450.0
+TARGET_HEIGHT = 750.0
 
-THICKNESS = 1.2
-GROOVE_WIDTH = 0.6
-GROOVE_DEPTH = 0.3
+DEFAULT_SCALE = 1 / 3
+
+DEFAULT_THICKNESS = 1.2
+DEFAULT_GROOVE_WIDTH = 0.6
+DEFAULT_GROOVE_DEPTH = 0.3
 
 
 TARGET_OUTLINE = [
@@ -43,45 +47,56 @@ C_D_BOUNDARY = [
 ]
 
 
-def make_target_outline():
+def make_target_outline(
+    scale,
+    thickness,
+):
     return make_extruded_polygon(
         TARGET_OUTLINE,
-        SCALE,
-        THICKNESS,
+        scale,
+        thickness,
     )
 
 
-def create_target():
+def create_target(
+    scale=DEFAULT_SCALE,
+    thickness=DEFAULT_THICKNESS,
+    groove_width=DEFAULT_GROOVE_WIDTH,
+    groove_depth=DEFAULT_GROOVE_DEPTH,
+):
     document = App.newDocument("USPSA_DryFire_Target")
 
-    target_shape = make_target_outline()
+    target_shape = make_target_outline(
+        scale,
+        thickness,
+    )
 
     upper_a_zone = make_rectangle_groove(
         100.0,
         50.0,
         675.0,
-        SCALE,
-        THICKNESS,
-        GROOVE_WIDTH,
-        GROOVE_DEPTH,
+        scale,
+        thickness,
+        groove_width,
+        groove_depth,
     )
 
     lower_a_zone = make_rectangle_groove(
         150.0,
         280.0,
         270.0,
-        SCALE,
-        THICKNESS,
-        GROOVE_WIDTH,
-        GROOVE_DEPTH,
+        scale,
+        thickness,
+        groove_width,
+        groove_depth,
     )
 
     c_d_boundary = make_polyline_groove(
         C_D_BOUNDARY,
-        SCALE,
-        THICKNESS,
-        GROOVE_WIDTH,
-        GROOVE_DEPTH,
+        scale,
+        thickness,
+        groove_width,
+        groove_depth,
     )
 
     target_shape = target_shape.cut(upper_a_zone)
@@ -120,10 +135,10 @@ def create_target():
         "Scoring Lines",
     )
 
-    target.Scale = SCALE
-    target.Thickness = THICKNESS
-    target.GrooveWidth = GROOVE_WIDTH
-    target.GrooveDepth = GROOVE_DEPTH
+    target.Scale = scale
+    target.Thickness = thickness
+    target.GrooveWidth = groove_width
+    target.GrooveDepth = groove_depth
 
     target.ViewObject.ShapeColor = (0.76, 0.56, 0.32)
 
@@ -135,6 +150,31 @@ def create_target():
     return target
 
 
+def show_target_dialog():
+    dialog = TargetSettingsDialog(
+        title="USPSA Cardboard Target",
+        target_width=TARGET_WIDTH,
+        target_height=TARGET_HEIGHT,
+        default_scale=DEFAULT_SCALE,
+        default_thickness=DEFAULT_THICKNESS,
+        default_groove_width=DEFAULT_GROOVE_WIDTH,
+        default_groove_depth=DEFAULT_GROOVE_DEPTH,
+        parent=Gui.getMainWindow(),
+    )
+
+    if dialog.exec() != QtWidgets.QDialog.Accepted:
+        return
+
+    settings = dialog.get_settings()
+
+    create_target(
+        scale=settings["scale"],
+        thickness=settings["thickness"],
+        groove_width=settings["groove_width"],
+        groove_depth=settings["groove_depth"],
+    )
+
+
 class CreateUSPSATargetCommand:
     def GetResources(self):
         return {
@@ -143,7 +183,7 @@ class CreateUSPSATargetCommand:
         }
 
     def Activated(self):
-        create_target()
+        show_target_dialog()
 
     def IsActive(self):
         return True
