@@ -1,6 +1,11 @@
 import FreeCAD as App
 import FreeCADGui as Gui
-import Part
+
+from freecad_dryfire_target.geometry import (
+    make_extruded_polygon,
+    make_polyline_groove,
+    make_rectangle_groove,
+)
 
 
 SCALE = 1 / 3
@@ -10,83 +15,40 @@ GROOVE_WIDTH = 0.6
 GROOVE_DEPTH = 0.3
 
 
-def scaled(value):
-    return value * SCALE
+TARGET_OUTLINE = [
+    (-150.0, 0.0),
+    (150.0, 0.0),
+    (225.0, 200.0),
+    (225.0, 550.0),
+    (150.0, 600.0),
+    (75.0, 600.0),
+    (75.0, 750.0),
+    (-75.0, 750.0),
+    (-75.0, 600.0),
+    (-150.0, 600.0),
+    (-225.0, 550.0),
+    (-225.0, 200.0),
+]
+
+
+C_D_BOUNDARY = [
+    (-75.0, 600.0),
+    (-150.0, 550.0),
+    (-150.0, 270.0),
+    (-100.0, 200.0),
+    (100.0, 200.0),
+    (150.0, 270.0),
+    (150.0, 550.0),
+    (75.0, 600.0),
+]
 
 
 def make_target_outline():
-    points = [
-        (-150.0, 0.0),
-        (150.0, 0.0),
-        (225.0, 200.0),
-        (225.0, 550.0),
-        (150.0, 600.0),
-        (75.0, 600.0),
-        (75.0, 750.0),
-        (-75.0, 750.0),
-        (-75.0, 600.0),
-        (-150.0, 600.0),
-        (-225.0, 550.0),
-        (-225.0, 200.0),
-    ]
-
-    vectors = [
-        App.Vector(
-            scaled(x),
-            scaled(y),
-            0,
-        )
-        for x, y in points
-    ]
-
-    vectors.append(vectors[0])
-
-    wire = Part.makePolygon(vectors)
-    face = Part.Face(wire)
-
-    return face.extrude(
-        App.Vector(
-            0,
-            0,
-            THICKNESS,
-        )
+    return make_extruded_polygon(
+        TARGET_OUTLINE,
+        SCALE,
+        THICKNESS,
     )
-
-
-def make_rectangle_groove(width, height, bottom):
-    width = scaled(width)
-    height = scaled(height)
-    bottom = scaled(bottom)
-
-    outer_width = width + GROOVE_WIDTH
-    outer_height = height + GROOVE_WIDTH
-
-    inner_width = width - GROOVE_WIDTH
-    inner_height = height - GROOVE_WIDTH
-
-    outer = Part.makeBox(
-        outer_width,
-        outer_height,
-        GROOVE_DEPTH,
-        App.Vector(
-            -outer_width / 2,
-            bottom - GROOVE_WIDTH / 2,
-            THICKNESS - GROOVE_DEPTH,
-        ),
-    )
-
-    inner = Part.makeBox(
-        inner_width,
-        inner_height,
-        GROOVE_DEPTH,
-        App.Vector(
-            -inner_width / 2,
-            bottom + GROOVE_WIDTH / 2,
-            THICKNESS - GROOVE_DEPTH,
-        ),
-    )
-
-    return outer.cut(inner)
 
 
 def create_target():
@@ -98,16 +60,33 @@ def create_target():
         100.0,
         50.0,
         675.0,
+        SCALE,
+        THICKNESS,
+        GROOVE_WIDTH,
+        GROOVE_DEPTH,
     )
 
     lower_a_zone = make_rectangle_groove(
         150.0,
         280.0,
         270.0,
+        SCALE,
+        THICKNESS,
+        GROOVE_WIDTH,
+        GROOVE_DEPTH,
+    )
+
+    c_d_boundary = make_polyline_groove(
+        C_D_BOUNDARY,
+        SCALE,
+        THICKNESS,
+        GROOVE_WIDTH,
+        GROOVE_DEPTH,
     )
 
     target_shape = target_shape.cut(upper_a_zone)
     target_shape = target_shape.cut(lower_a_zone)
+    target_shape = target_shape.cut(c_d_boundary)
 
     target = document.addObject(
         "Part::Feature",
