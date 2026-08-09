@@ -12,8 +12,8 @@ class ReloadDryFireTargetCommand:
         }
 
     def Activated(self):
-        from freecad_dryfire_target import geometry
         from freecad_dryfire_target import dialog
+        from freecad_dryfire_target import geometry
         from freecad_dryfire_target import uspsa
 
         importlib.reload(geometry)
