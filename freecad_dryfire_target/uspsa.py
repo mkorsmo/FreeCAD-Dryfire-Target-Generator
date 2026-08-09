@@ -162,7 +162,7 @@ def show_target_dialog():
         parent=Gui.getMainWindow(),
     )
 
-    if dialog.exec() != QtWidgets.QDialog.Accepted:
+    if not dialog.exec():
         return
 
     settings = dialog.get_settings()
