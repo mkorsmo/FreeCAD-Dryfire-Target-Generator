@@ -8,7 +8,12 @@ def scale_value(value, scale_factor):
     return value * scale_factor
 
 
-def make_extruded_polygon(points, scale_factor, thickness):
+def make_extruded_polygon(
+    points,
+    scale_factor,
+    thickness,
+    z_offset=0,
+):
     vectors = [
         App.Vector(
             scale_value(x, scale_factor),
@@ -23,13 +28,24 @@ def make_extruded_polygon(points, scale_factor, thickness):
     wire = Part.makePolygon(vectors)
     face = Part.Face(wire)
 
-    return face.extrude(
+    solid = face.extrude(
         App.Vector(
             0,
             0,
             thickness,
         )
     )
+
+    if z_offset:
+        solid.translate(
+            App.Vector(
+                0,
+                0,
+                z_offset,
+            )
+        )
+
+    return solid
 
 
 def make_rectangle_groove(
@@ -40,6 +56,7 @@ def make_rectangle_groove(
     thickness,
     groove_width,
     groove_depth,
+    face="top",
 ):
     width = scale_value(width, scale_factor)
     height = scale_value(height, scale_factor)
@@ -47,9 +64,14 @@ def make_rectangle_groove(
 
     outer_width = width + groove_width
     outer_height = height + groove_width
-
     inner_width = width - groove_width
     inner_height = height - groove_width
+
+    z = get_groove_z(
+        thickness,
+        groove_depth,
+        face,
+    )
 
     outer = Part.makeBox(
         outer_width,
@@ -58,7 +80,7 @@ def make_rectangle_groove(
         App.Vector(
             -outer_width / 2,
             bottom - groove_width / 2,
-            thickness - groove_depth,
+            z,
         ),
     )
 
@@ -69,7 +91,7 @@ def make_rectangle_groove(
         App.Vector(
             -inner_width / 2,
             bottom + groove_width / 2,
-            thickness - groove_depth,
+            z,
         ),
     )
 
@@ -83,6 +105,7 @@ def make_polyline_groove(
     groove_width,
     groove_depth,
     closed=True,
+    face="top",
 ):
     points = [
         (
@@ -92,9 +115,13 @@ def make_polyline_groove(
         for x, y in points
     ]
 
-    z = thickness - groove_depth
-    radius = groove_width / 2
+    z = get_groove_z(
+        thickness,
+        groove_depth,
+        face,
+    )
 
+    radius = groove_width / 2
     groove = None
 
     segment_count = len(points) if closed else len(points) - 1
@@ -107,7 +134,12 @@ def make_polyline_groove(
         delta_y = y2 - y1
 
         length = math.hypot(delta_x, delta_y)
-        angle = math.degrees(math.atan2(delta_y, delta_x))
+        angle = math.degrees(
+            math.atan2(
+                delta_y,
+                delta_x,
+            )
+        )
 
         segment = Part.makeBox(
             length,
@@ -153,3 +185,36 @@ def make_polyline_groove(
         groove = groove.fuse(joint)
 
     return groove
+
+def make_centered_rectangle(
+    width,
+    height,
+    bottom,
+    scale_factor,
+    thickness,
+    z_offset=0,
+):
+    width = scale_value(width, scale_factor)
+    height = scale_value(height, scale_factor)
+    bottom = scale_value(bottom, scale_factor)
+
+    return Part.makeBox(
+        width,
+        height,
+        thickness,
+        App.Vector(
+            -width / 2,
+            bottom,
+            z_offset,
+        ),
+    )
+
+def get_groove_z(
+    thickness,
+    groove_depth,
+    face,
+):
+    if face == "bottom":
+        return 0
+
+    return thickness - groove_depth
