@@ -7,6 +7,9 @@ class DryFireTargetWorkbench(Workbench):
 
     def Initialize(self):
         from freecad_dryfire_target import uspsa
+        from freecad_dryfire_target.commands import (
+            ReloadDryFireTargetCommand,
+        )
 
         Gui.addCommand(
             "DryFireTarget_USPSACardboard",
@@ -18,9 +21,16 @@ class DryFireTargetWorkbench(Workbench):
             uspsa.CreateUSPSACenterStripeCommand(),
         )
 
+        Gui.addCommand(
+            "DryFireTarget_Reload",
+            ReloadDryFireTargetCommand(),
+        )
+
         commands = [
             "DryFireTarget_USPSACardboard",
             "DryFireTarget_USPSACenterStripe",
+            "Separator",
+            "DryFireTarget_Reload",
         ]
 
         self.appendToolbar(
