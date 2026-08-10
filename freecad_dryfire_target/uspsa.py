@@ -328,6 +328,7 @@ def create_center_stripe_target(
     view = Gui.activeDocument().activeView()
     view.viewBottom()
     view.fitAll()
+    view.fitAll()
 
     return back, cardboard, hard_cover
 
