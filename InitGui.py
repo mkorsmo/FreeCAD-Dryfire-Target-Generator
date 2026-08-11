@@ -22,8 +22,8 @@ class DryFireTargetWorkbench(Workbench):
         )
 
         Gui.addCommand(
-            "DryFireTarget_USPSATuxedo",
-            uspsa.CreateUSPSATuxedoCommand(),
+            "DryFireTarget_USPSADiagonalRight",
+            uspsa.CreateUSPSADiagonalRightCommand(),
         )
 
         Gui.addCommand(
@@ -32,8 +32,18 @@ class DryFireTargetWorkbench(Workbench):
         )
 
         Gui.addCommand(
-            "DryFireTarget_USPSADiagonalRight",
-            uspsa.CreateUSPSADiagonalRightCommand(),
+            "DryFireTarget_USPSATuxedo",
+            uspsa.CreateUSPSATuxedoCommand(),
+        )
+
+        Gui.addCommand(
+            "DryFireTarget_USPSARightHalf",
+            uspsa.CreateUSPSARightHalfCommand(),
+        )
+
+        Gui.addCommand(
+            "DryFireTarget_USPSALeftHalf",
+            uspsa.CreateUSPSALeftHalfCommand(),
         )
 
         Gui.addCommand(
@@ -44,9 +54,11 @@ class DryFireTargetWorkbench(Workbench):
         commands = [
             "DryFireTarget_USPSACardboard",
             "DryFireTarget_USPSACenterStripe",
-            "DryFireTarget_USPSATuxedo",
-            "DryFireTarget_USPSADiagonalLeft",
             "DryFireTarget_USPSADiagonalRight",
+            "DryFireTarget_USPSADiagonalLeft",
+            "DryFireTarget_USPSATuxedo",
+            "DryFireTarget_USPSARightHalf",
+            "DryFireTarget_USPSALeftHalf",
             "Separator",
             "DryFireTarget_Reload",
         ]
