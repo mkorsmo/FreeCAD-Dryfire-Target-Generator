@@ -1,59 +1,70 @@
 import FreeCADGui as Gui
 
+from freecad_dryfire_target.commands import (
+    ReloadDryFireTargetCommand,
+)
+
+from freecad_dryfire_target.uspsa.commands import (
+    CreateUSPSABodyHardCoverCommand,
+    CreateUSPSACenterStripeCommand,
+    CreateUSPSADiagonalLeftCommand,
+    CreateUSPSADiagonalRightCommand,
+    CreateUSPSALeftHalfCommand,
+    CreateUSPSALowerHalfHardCoverCommand,
+    CreateUSPSARightHalfCommand,
+    CreateUSPSATargetCommand,
+    CreateUSPSATuxedoCommand,
+)
+
 
 class DryFireTargetWorkbench(Workbench):
     MenuText = "Dry Fire Targets"
     ToolTip = "Generate scaled dry fire targets"
 
     def Initialize(self):
-        from freecad_dryfire_target import uspsa
-        from freecad_dryfire_target.commands import (
-            ReloadDryFireTargetCommand,
-        )
-
         Gui.addCommand(
             "DryFireTarget_USPSACardboard",
-            uspsa.CreateUSPSATargetCommand(),
+            CreateUSPSATargetCommand(),
         )
 
         Gui.addCommand(
             "DryFireTarget_USPSABodyHardCover",
-            uspsa.CreateUSPSABodyHardCoverCommand(),
+            CreateUSPSABodyHardCoverCommand(),
         )
 
         Gui.addCommand(
             "DryFireTarget_USPSADiagonalRight",
-            uspsa.CreateUSPSADiagonalRightCommand(),
+            CreateUSPSADiagonalRightCommand(),
         )
 
         Gui.addCommand(
             "DryFireTarget_USPSADiagonalLeft",
-            uspsa.CreateUSPSADiagonalLeftCommand(),
+            CreateUSPSADiagonalLeftCommand(),
         )
 
         Gui.addCommand(
             "DryFireTarget_USPSATuxedo",
-            uspsa.CreateUSPSATuxedoCommand(),
+            CreateUSPSATuxedoCommand(),
         )
 
         Gui.addCommand(
             "DryFireTarget_USPSALowerHalfHardCover",
-            uspsa.CreateUSPSALowerHalfHardCoverCommand(),
+            CreateUSPSALowerHalfHardCoverCommand(),
         )
 
         Gui.addCommand(
             "DryFireTarget_USPSARightHalf",
-            uspsa.CreateUSPSARightHalfCommand(),
+            CreateUSPSARightHalfCommand(),
         )
 
         Gui.addCommand(
             "DryFireTarget_USPSALeftHalf",
-            uspsa.CreateUSPSALeftHalfCommand(),
+            CreateUSPSALeftHalfCommand(),
         )
 
         Gui.addCommand(
             "DryFireTarget_USPSACenterStripe",
-            uspsa.CreateUSPSACenterStripeCommand(),
+            CreateUSPSACenterStripeCommand(),
         )
 
         Gui.addCommand(
