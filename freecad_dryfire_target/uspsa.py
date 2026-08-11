@@ -355,7 +355,7 @@ def make_lower_half_hard_cover_mask(
     USPSA Hardcover Version 5.
 
     Hard cover occupies the lower half of the full 750 mm target,
-    ending at 375 mm from the bottom.
+    ending at 475 mm from the bottom.
     """
     points = [
         (-400.0, -100.0),
