@@ -239,3 +239,33 @@ def create_vertical_pvc_clip_test(
     view.fitAll()
 
     return coupon
+
+def make_vertical_pvc_clips(
+    positions,
+    z_offset,
+    pvc_od=PVC_HALF_INCH_OD,
+    diametral_clearance=DEFAULT_DIAMETRAL_CLEARANCE,
+):
+    clips = None
+
+    for x, y in positions:
+        clip = make_vertical_pvc_clip(
+            pvc_od=pvc_od,
+            diametral_clearance=diametral_clearance,
+            z_offset=z_offset,
+        )
+
+        clip.translate(
+            App.Vector(
+                x,
+                y,
+                0,
+            )
+        )
+
+        if clips is None:
+            clips = clip
+        else:
+            clips = clips.fuse(clip)
+
+    return clips.removeSplitter()
