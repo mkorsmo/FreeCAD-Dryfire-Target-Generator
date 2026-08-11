@@ -23,6 +23,8 @@ DEFAULT_CENTER_STRIPE_WIDTH = 50.8
 
 DEFAULT_DIAGONAL_SHOULDER_X = 150.0
 DEFAULT_DIAGONAL_BOTTOM_X = 150.0
+DEFAULT_TUXEDO_CENTER_WIDTH = 150.0
+DEFAULT_TUXEDO_BODY_TOP = 600.0
 
 
 TARGET_OUTLINE = [
@@ -211,6 +213,50 @@ def make_diagonal_right_mask(
     )
 
 
+def make_tuxedo_mask(
+    scale,
+    thickness,
+    center_width=DEFAULT_TUXEDO_CENTER_WIDTH,
+    body_top=DEFAULT_TUXEDO_BODY_TOP,
+):
+    """
+    USPSA Hardcover Version 4, commonly called the Tuxedo target.
+
+    Hard cover occupies both sides of the target body while
+    leaving a centered scoring strip exposed. The head remains
+    uncovered.
+    """
+    half_center_width = center_width / 2
+
+    left_points = [
+        (-400.0, -100.0),
+        (-half_center_width, -100.0),
+        (-half_center_width, body_top),
+        (-400.0, body_top),
+    ]
+
+    right_points = [
+        (half_center_width, -100.0),
+        (400.0, -100.0),
+        (400.0, body_top),
+        (half_center_width, body_top),
+    ]
+
+    left_mask = make_extruded_polygon(
+        left_points,
+        scale,
+        thickness,
+    )
+
+    right_mask = make_extruded_polygon(
+        right_points,
+        scale,
+        thickness,
+    )
+
+    return left_mask.fuse(right_mask)
+
+
 def build_hard_cover_target(
     document_name,
     scale,
@@ -375,6 +421,31 @@ def create_center_stripe_target(
     )
 
 
+def create_tuxedo_target(
+    scale=DEFAULT_SCALE,
+    thickness=DEFAULT_THICKNESS,
+    groove_width=DEFAULT_GROOVE_WIDTH,
+    groove_depth=DEFAULT_GROOVE_DEPTH,
+    center_width=DEFAULT_TUXEDO_CENTER_WIDTH,
+    face_layer_thickness=DEFAULT_FACE_LAYER_THICKNESS,
+):
+    tuxedo_mask = make_tuxedo_mask(
+        scale,
+        face_layer_thickness,
+        center_width=center_width,
+    )
+
+    return build_hard_cover_target(
+        document_name="USPSA_Tuxedo_Target",
+        scale=scale,
+        thickness=thickness,
+        groove_width=groove_width,
+        groove_depth=groove_depth,
+        hard_cover_mask=tuxedo_mask,
+        face_layer_thickness=face_layer_thickness,
+    )
+
+
 def create_diagonal_left_target(
     scale=DEFAULT_SCALE,
     thickness=DEFAULT_THICKNESS,
@@ -475,6 +546,35 @@ def show_center_stripe_dialog():
     )
 
 
+def show_tuxedo_dialog():
+    dialog = TargetSettingsDialog(
+        title="USPSA Tuxedo Hard Cover",
+        target_width=TARGET_WIDTH,
+        target_height=TARGET_HEIGHT,
+        default_scale=DEFAULT_SCALE,
+        default_thickness=DEFAULT_THICKNESS,
+        default_groove_width=DEFAULT_GROOVE_WIDTH,
+        default_groove_depth=DEFAULT_GROOVE_DEPTH,
+        parent=Gui.getMainWindow(),
+    )
+
+    if not dialog.exec():
+        return
+
+    settings = dialog.get_settings()
+
+    App.Console.PrintMessage(
+        "Tuxedo hard cover uses face-down split parts.\n"
+    )
+
+    create_tuxedo_target(
+        scale=settings["scale"],
+        thickness=settings["thickness"],
+        groove_width=settings["groove_width"],
+        groove_depth=settings["groove_depth"],
+    )
+
+
 def show_diagonal_left_dialog():
     dialog = TargetSettingsDialog(
         title="USPSA Diagonal Left Hard Cover",
@@ -556,6 +656,20 @@ class CreateUSPSACenterStripeCommand:
 
     def Activated(self):
         show_center_stripe_dialog()
+
+    def IsActive(self):
+        return True
+
+
+class CreateUSPSATuxedoCommand:
+    def GetResources(self):
+        return {
+            "MenuText": "USPSA Tuxedo Hard Cover",
+            "ToolTip": "Create USPSA Hardcover Version 4",
+        }
+
+    def Activated(self):
+        show_tuxedo_dialog()
 
     def IsActive(self):
         return True
