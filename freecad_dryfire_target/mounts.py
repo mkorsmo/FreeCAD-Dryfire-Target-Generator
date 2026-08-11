@@ -6,18 +6,20 @@ import Part
 PVC_HALF_INCH_OD = 21.34
 
 DEFAULT_DIAMETRAL_CLEARANCE = 0.40
-DEFAULT_CLIP_LENGTH = 18.0
-DEFAULT_WALL_THICKNESS = 2.40
+DEFAULT_CLIP_LENGTH = 20.0
+DEFAULT_WALL_THICKNESS = 2.60
 DEFAULT_ARM_HEIGHT = 17.0
 DEFAULT_HOOK_PROJECTION = 1.00
 DEFAULT_HOOK_CENTER_HEIGHT = 13.50
 DEFAULT_HOOK_HEIGHT = 4.0
-DEFAULT_PAD_THICKNESS = 1.60
-DEFAULT_PAD_MARGIN_X = 2.0
+DEFAULT_PAD_THICKNESS = 2.00
+DEFAULT_PAD_MARGIN_X = 2.5
 DEFAULT_PAD_MARGIN_Y = 3.0
+DEFAULT_GUSSET_HEIGHT = 4.0
+DEFAULT_GUSSET_PROJECTION = 2.0
 
-DEFAULT_TEST_PLATE_WIDTH = 42.0
-DEFAULT_TEST_PLATE_LENGTH = 34.0
+DEFAULT_TEST_PLATE_WIDTH = 44.0
+DEFAULT_TEST_PLATE_LENGTH = 36.0
 DEFAULT_TEST_PLATE_THICKNESS = 1.20
 
 
@@ -62,27 +64,45 @@ def make_vertical_pvc_clip(
     pad_margin_x=DEFAULT_PAD_MARGIN_X,
     pad_margin_y=DEFAULT_PAD_MARGIN_Y,
     z_offset=0.0,
+    gusset_height=DEFAULT_GUSSET_HEIGHT,
+    gusset_projection=DEFAULT_GUSSET_PROJECTION,
 ):
     """
-    Create a support-free snap clip for nominal 1/2-inch PVC.
+    Create a reinforced, support-free snap clip for nominal 1/2-inch PVC.
 
     The pipe axis runs along Y, so on the back of an upright target
     this is the VERTICAL pipe orientation.
 
     The opening faces +Z, away from the target backing, which allows
     the target to remain face-down during printing.
+
+    The proven PVC clearance and hook geometry are retained. V1 adds
+    a slightly thicker pad and arms, a little more clip length, and
+    external triangular gussets at the arm roots.
     """
     inner_gap = pvc_od + diametral_clearance
 
     inner_left_x = -inner_gap / 2
     inner_right_x = inner_gap / 2
 
+    left_outer_x = (
+        inner_left_x - wall_thickness
+    )
+
+    right_outer_x = (
+        inner_right_x + wall_thickness
+    )
+
     pad_width = (
         inner_gap
         + wall_thickness * 2
         + pad_margin_x * 2
     )
-    pad_length = clip_length + pad_margin_y * 2
+
+    pad_length = (
+        clip_length
+        + pad_margin_y * 2
+    )
 
     pad = Part.makeBox(
         pad_width,
@@ -102,7 +122,7 @@ def make_vertical_pvc_clip(
         clip_length,
         arm_height,
         App.Vector(
-            inner_left_x - wall_thickness,
+            left_outer_x,
             -clip_length / 2,
             arm_z,
         ),
@@ -125,7 +145,10 @@ def make_vertical_pvc_clip(
         - hook_height / 2
     )
 
-    hook_center = arm_z + hook_center_height
+    hook_center = (
+        arm_z
+        + hook_center_height
+    )
 
     hook_top = (
         arm_z
@@ -135,24 +158,78 @@ def make_vertical_pvc_clip(
 
     left_hook = make_xz_prism(
         [
-            (inner_left_x, hook_bottom),
             (
-                inner_left_x + hook_projection,
+                inner_left_x,
+                hook_bottom,
+            ),
+            (
+                inner_left_x
+                + hook_projection,
                 hook_center,
             ),
-            (inner_left_x, hook_top),
+            (
+                inner_left_x,
+                hook_top,
+            ),
         ],
         clip_length,
     )
 
     right_hook = make_xz_prism(
         [
-            (inner_right_x, hook_bottom),
             (
-                inner_right_x - hook_projection,
+                inner_right_x,
+                hook_bottom,
+            ),
+            (
+                inner_right_x
+                - hook_projection,
                 hook_center,
             ),
-            (inner_right_x, hook_top),
+            (
+                inner_right_x,
+                hook_top,
+            ),
+        ],
+        clip_length,
+    )
+
+    left_gusset = make_xz_prism(
+        [
+            (
+                left_outer_x,
+                arm_z,
+            ),
+            (
+                left_outer_x
+                - gusset_projection,
+                arm_z,
+            ),
+            (
+                left_outer_x,
+                arm_z
+                + gusset_height,
+            ),
+        ],
+        clip_length,
+    )
+
+    right_gusset = make_xz_prism(
+        [
+            (
+                right_outer_x,
+                arm_z,
+            ),
+            (
+                right_outer_x
+                + gusset_projection,
+                arm_z,
+            ),
+            (
+                right_outer_x,
+                arm_z
+                + gusset_height,
+            ),
         ],
         clip_length,
     )
@@ -161,6 +238,8 @@ def make_vertical_pvc_clip(
     clip = clip.fuse(right_arm)
     clip = clip.fuse(left_hook)
     clip = clip.fuse(right_hook)
+    clip = clip.fuse(left_gusset)
+    clip = clip.fuse(right_gusset)
 
     return clip.removeSplitter()
 
@@ -175,8 +254,7 @@ def make_vertical_pvc_clips(
     Create multiple vertical PVC clips at physical X/Y positions.
 
     Positions are supplied in millimeters. The clip geometry itself
-    is never scaled with the target because the PVC remains a fixed
-    physical size.
+    is not scaled because the PVC remains a fixed physical size.
     """
     clips = None
 
@@ -213,10 +291,11 @@ def create_vertical_pvc_clip_test(
     diametral_clearance=DEFAULT_DIAMETRAL_CLEARANCE,
 ):
     """
-    Create a small printable test coupon for dialing in the snap fit
-    before the mount is added to a full target.
+    Create a small printable test coupon for the reinforced V1 clip.
     """
-    document = App.newDocument("Vertical_PVC_Clip_Test")
+    document = App.newDocument(
+        "Vertical_PVC_Clip_Test"
+    )
 
     plate = Part.makeBox(
         DEFAULT_TEST_PLATE_WIDTH,
@@ -235,14 +314,21 @@ def create_vertical_pvc_clip_test(
         z_offset=DEFAULT_TEST_PLATE_THICKNESS,
     )
 
-    coupon_shape = plate.fuse(clip).removeSplitter()
+    coupon_shape = (
+        plate
+        .fuse(clip)
+        .removeSplitter()
+    )
 
     coupon = document.addObject(
         "Part::Feature",
         "Vertical_PVC_Clip_Test",
     )
 
-    coupon.Label = "Vertical 1/2 PVC Clip Test"
+    coupon.Label = (
+        "Vertical 1/2 PVC Clip Test - Reinforced V1"
+    )
+
     coupon.Shape = coupon_shape
 
     coupon.addProperty(
@@ -275,11 +361,44 @@ def create_vertical_pvc_clip_test(
         "PVC Clip",
     )
 
+    coupon.addProperty(
+        "App::PropertyLength",
+        "PadThickness",
+        "PVC Clip",
+    )
+
+    coupon.addProperty(
+        "App::PropertyLength",
+        "GussetHeight",
+        "PVC Clip",
+    )
+
+    coupon.addProperty(
+        "App::PropertyLength",
+        "GussetProjection",
+        "PVC Clip",
+    )
+
     coupon.PVCOutsideDiameter = pvc_od
-    coupon.DiametralClearance = diametral_clearance
+    coupon.DiametralClearance = (
+        diametral_clearance
+    )
     coupon.ClipLength = DEFAULT_CLIP_LENGTH
-    coupon.WallThickness = DEFAULT_WALL_THICKNESS
-    coupon.HookProjection = DEFAULT_HOOK_PROJECTION
+    coupon.WallThickness = (
+        DEFAULT_WALL_THICKNESS
+    )
+    coupon.HookProjection = (
+        DEFAULT_HOOK_PROJECTION
+    )
+    coupon.PadThickness = (
+        DEFAULT_PAD_THICKNESS
+    )
+    coupon.GussetHeight = (
+        DEFAULT_GUSSET_HEIGHT
+    )
+    coupon.GussetProjection = (
+        DEFAULT_GUSSET_PROJECTION
+    )
 
     document.recompute()
 
