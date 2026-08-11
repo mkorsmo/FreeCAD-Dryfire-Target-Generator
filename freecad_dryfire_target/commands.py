@@ -13,6 +13,7 @@ class ReloadDryFireTargetCommand:
     def Activated(self):
         from freecad_dryfire_target import dialog
         from freecad_dryfire_target import geometry
+        from freecad_dryfire_target import mounts
 
         from freecad_dryfire_target.uspsa import commands
         from freecad_dryfire_target.uspsa import dimensions
@@ -21,6 +22,7 @@ class ReloadDryFireTargetCommand:
 
         importlib.reload(geometry)
         importlib.reload(dialog)
+        importlib.reload(mounts)
 
         importlib.reload(dimensions)
         importlib.reload(target)

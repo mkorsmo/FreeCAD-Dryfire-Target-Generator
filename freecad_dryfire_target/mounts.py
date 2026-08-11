@@ -124,7 +124,9 @@ def make_vertical_pvc_clip(
         + hook_center_height
         - hook_height / 2
     )
+
     hook_center = arm_z + hook_center_height
+
     hook_top = (
         arm_z
         + hook_center_height
@@ -161,6 +163,49 @@ def make_vertical_pvc_clip(
     clip = clip.fuse(right_hook)
 
     return clip.removeSplitter()
+
+
+def make_vertical_pvc_clips(
+    positions,
+    z_offset,
+    pvc_od=PVC_HALF_INCH_OD,
+    diametral_clearance=DEFAULT_DIAMETRAL_CLEARANCE,
+):
+    """
+    Create multiple vertical PVC clips at physical X/Y positions.
+
+    Positions are supplied in millimeters. The clip geometry itself
+    is never scaled with the target because the PVC remains a fixed
+    physical size.
+    """
+    clips = None
+
+    for x, y in positions:
+        clip = make_vertical_pvc_clip(
+            pvc_od=pvc_od,
+            diametral_clearance=diametral_clearance,
+            z_offset=z_offset,
+        )
+
+        clip.translate(
+            App.Vector(
+                x,
+                y,
+                0,
+            )
+        )
+
+        if clips is None:
+            clips = clip
+        else:
+            clips = clips.fuse(clip)
+
+    if clips is None:
+        raise ValueError(
+            "At least one clip position is required."
+        )
+
+    return clips.removeSplitter()
 
 
 def create_vertical_pvc_clip_test(
@@ -205,21 +250,25 @@ def create_vertical_pvc_clip_test(
         "PVCOutsideDiameter",
         "PVC Clip",
     )
+
     coupon.addProperty(
         "App::PropertyLength",
         "DiametralClearance",
         "PVC Clip",
     )
+
     coupon.addProperty(
         "App::PropertyLength",
         "ClipLength",
         "PVC Clip",
     )
+
     coupon.addProperty(
         "App::PropertyLength",
         "WallThickness",
         "PVC Clip",
     )
+
     coupon.addProperty(
         "App::PropertyLength",
         "HookProjection",
@@ -239,33 +288,3 @@ def create_vertical_pvc_clip_test(
     view.fitAll()
 
     return coupon
-
-def make_vertical_pvc_clips(
-    positions,
-    z_offset,
-    pvc_od=PVC_HALF_INCH_OD,
-    diametral_clearance=DEFAULT_DIAMETRAL_CLEARANCE,
-):
-    clips = None
-
-    for x, y in positions:
-        clip = make_vertical_pvc_clip(
-            pvc_od=pvc_od,
-            diametral_clearance=diametral_clearance,
-            z_offset=z_offset,
-        )
-
-        clip.translate(
-            App.Vector(
-                x,
-                y,
-                0,
-            )
-        )
-
-        if clips is None:
-            clips = clip
-        else:
-            clips = clips.fuse(clip)
-
-    return clips.removeSplitter()

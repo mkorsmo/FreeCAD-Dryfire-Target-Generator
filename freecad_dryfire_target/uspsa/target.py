@@ -7,6 +7,10 @@ from freecad_dryfire_target.geometry import (
     make_rectangle_groove,
 )
 
+from freecad_dryfire_target.mounts import (
+    make_vertical_pvc_clips,
+)
+
 from freecad_dryfire_target.uspsa.dimensions import (
     C_D_BOUNDARY,
     DEFAULT_GROOVE_DEPTH,
@@ -21,6 +25,12 @@ from freecad_dryfire_target.uspsa.dimensions import (
     UPPER_A_ZONE_HEIGHT,
     UPPER_A_ZONE_WIDTH,
 )
+
+
+VERTICAL_PVC_TEST_CLIP_POSITIONS = [
+    (0.0, 150.0),
+    (0.0, 450.0),
+]
 
 
 def make_target_outline(
@@ -135,6 +145,86 @@ def create_target(
 
     view = Gui.activeDocument().activeView()
     view.viewTop()
+    view.fitAll()
+
+    return target
+
+
+def create_vertical_pvc_mount_test_target(
+    scale=DEFAULT_SCALE,
+    thickness=DEFAULT_THICKNESS,
+    groove_width=DEFAULT_GROOVE_WIDTH,
+    groove_depth=DEFAULT_GROOVE_DEPTH,
+):
+    """
+    Create a full USPSA target with two vertical 1/2-inch PVC clips.
+
+    This is intentionally a test-only creator. The target face is at
+    Z=0 and the clips grow from the back at Z=thickness so the entire
+    part can be printed face-down.
+    """
+    document = App.newDocument(
+        "USPSA_Vertical_PVC_Mount_Test"
+    )
+
+    target_shape = make_target_outline(
+        scale,
+        thickness,
+    )
+
+    target_shape = add_scoring_grooves(
+        target_shape,
+        scale,
+        thickness,
+        groove_width,
+        groove_depth,
+        face="bottom",
+    )
+
+    clip_positions = [
+        (
+            x * scale,
+            y * scale,
+        )
+        for x, y in VERTICAL_PVC_TEST_CLIP_POSITIONS
+    ]
+
+    clips = make_vertical_pvc_clips(
+        positions=clip_positions,
+        z_offset=thickness,
+    )
+
+    target_shape = target_shape.fuse(
+        clips
+    ).removeSplitter()
+
+    target_shape.rotate(
+        App.Vector(0, 0, 0),
+        App.Vector(0, 0, 1),
+        180,
+    )
+
+    target = document.addObject(
+        "Part::Feature",
+        "USPSA_Vertical_PVC_Mount_Test",
+    )
+
+    target.Label = (
+        "USPSA Vertical 1/2 PVC Mount Test"
+    )
+
+    target.Shape = target_shape
+
+    target.ViewObject.ShapeColor = (
+        0.76,
+        0.56,
+        0.32,
+    )
+
+    document.recompute()
+
+    view = Gui.activeDocument().activeView()
+    view.viewBottom()
     view.fitAll()
 
     return target
