@@ -24,6 +24,12 @@ from freecad_dryfire_target.uspsa.hardcover import (
 )
 
 from freecad_dryfire_target.uspsa.target import (
+    MOUNT_LAYOUT_BOTTOM,
+    MOUNT_LAYOUT_MIDDLE,
+    MOUNT_LAYOUT_TOP,
+    MOUNT_LAYOUT_TOP_BOTTOM,
+    MOUNT_NONE,
+    MOUNT_VERTICAL_PVC,
     create_target,
 )
 
@@ -38,6 +44,20 @@ TARGET_TYPES = [
     ("Hard Cover V6 - Right Side", "right_side"),
     ("Hard Cover V7 - Left Side", "left_side"),
     ("Center Stripe", "center_stripe"),
+]
+
+
+MOUNT_TYPES = [
+    ("None", MOUNT_NONE),
+    ('Vertical 1/2" PVC', MOUNT_VERTICAL_PVC),
+]
+
+
+MOUNT_LAYOUT_TYPES = [
+    ("Top + Bottom", MOUNT_LAYOUT_TOP_BOTTOM),
+    ("Top", MOUNT_LAYOUT_TOP),
+    ("Middle", MOUNT_LAYOUT_MIDDLE),
+    ("Bottom", MOUNT_LAYOUT_BOTTOM),
 ]
 
 
@@ -64,6 +84,8 @@ def show_target_dialog():
         default_groove_width=DEFAULT_GROOVE_WIDTH,
         default_groove_depth=DEFAULT_GROOVE_DEPTH,
         target_types=TARGET_TYPES,
+        mount_types=MOUNT_TYPES,
+        mount_layout_types=MOUNT_LAYOUT_TYPES,
         parent=Gui.getMainWindow(),
     )
 
@@ -93,6 +115,8 @@ def show_target_dialog():
         thickness=settings["thickness"],
         groove_width=settings["groove_width"],
         groove_depth=settings["groove_depth"],
+        mount=settings["mount"],
+        mount_layout=settings["mount_layout"],
     )
 
 

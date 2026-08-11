@@ -12,6 +12,8 @@ class TargetSettingsDialog(QtWidgets.QDialog):
         default_groove_width,
         default_groove_depth,
         target_types=None,
+        mount_types=None,
+        mount_layout_types=None,
         parent=None,
     ):
         super().__init__(parent)
@@ -19,6 +21,8 @@ class TargetSettingsDialog(QtWidgets.QDialog):
         self.target_width = target_width
         self.target_height = target_height
         self.target_types = target_types
+        self.mount_types = mount_types
+        self.mount_layout_types = mount_layout_types
 
         self.setWindowTitle(title)
         self.setMinimumWidth(360)
@@ -33,6 +37,7 @@ class TargetSettingsDialog(QtWidgets.QDialog):
         self.update_scale_controls()
         self.update_target_size()
         self.update_groove_depth_limit()
+        self.update_mount_controls()
 
     def build_ui(
         self,
@@ -52,7 +57,10 @@ class TargetSettingsDialog(QtWidgets.QDialog):
             self.target_type_combo = QtWidgets.QComboBox()
 
             for label, value in self.target_types:
-                self.target_type_combo.addItem(label, value)
+                self.target_type_combo.addItem(
+                    label,
+                    value,
+                )
 
             target_layout.addRow(
                 "Target type:",
@@ -60,6 +68,43 @@ class TargetSettingsDialog(QtWidgets.QDialog):
             )
 
             layout.addWidget(target_group)
+
+        self.mount_combo = None
+        self.mount_layout_combo = None
+
+        if self.mount_types or self.mount_layout_types:
+            mount_group = QtWidgets.QGroupBox("Mount")
+            mount_layout = QtWidgets.QFormLayout(mount_group)
+
+            if self.mount_types:
+                self.mount_combo = QtWidgets.QComboBox()
+
+                for label, value in self.mount_types:
+                    self.mount_combo.addItem(
+                        label,
+                        value,
+                    )
+
+                mount_layout.addRow(
+                    "Back mount:",
+                    self.mount_combo,
+                )
+
+            if self.mount_layout_types:
+                self.mount_layout_combo = QtWidgets.QComboBox()
+
+                for label, value in self.mount_layout_types:
+                    self.mount_layout_combo.addItem(
+                        label,
+                        value,
+                    )
+
+                mount_layout.addRow(
+                    "Clip layout:",
+                    self.mount_layout_combo,
+                )
+
+            layout.addWidget(mount_group)
 
         scale_group = QtWidgets.QGroupBox("Scale")
         scale_layout = QtWidgets.QFormLayout(scale_group)
@@ -209,6 +254,11 @@ class TargetSettingsDialog(QtWidgets.QDialog):
             self.update_groove_depth_limit
         )
 
+        if self.mount_combo:
+            self.mount_combo.currentIndexChanged.connect(
+                self.update_mount_controls
+            )
+
     def select_scale(self, scale):
         for index in range(self.scale_combo.count()):
             item_scale = self.scale_combo.itemData(index)
@@ -231,6 +281,19 @@ class TargetSettingsDialog(QtWidgets.QDialog):
         self.actual_distance.setEnabled(distance)
         self.simulated_distance.setEnabled(distance)
         self.calculated_scale_label.setEnabled(distance)
+
+    def update_mount_controls(self):
+        if not self.mount_layout_combo:
+            return
+
+        mount = None
+
+        if self.mount_combo:
+            mount = self.mount_combo.currentData()
+
+        enabled = mount not in (None, "none")
+
+        self.mount_layout_combo.setEnabled(enabled)
 
     def update_target_size(self):
         scale = self.get_scale()
@@ -281,6 +344,16 @@ class TargetSettingsDialog(QtWidgets.QDialog):
         if self.target_type_combo:
             settings["target_type"] = (
                 self.target_type_combo.currentData()
+            )
+
+        if self.mount_combo:
+            settings["mount"] = (
+                self.mount_combo.currentData()
+            )
+
+        if self.mount_layout_combo:
+            settings["mount_layout"] = (
+                self.mount_layout_combo.currentData()
             )
 
         return settings

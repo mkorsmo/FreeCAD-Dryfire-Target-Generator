@@ -24,7 +24,10 @@ from freecad_dryfire_target.uspsa.dimensions import (
 )
 
 from freecad_dryfire_target.uspsa.target import (
+    MOUNT_LAYOUT_TOP_BOTTOM,
+    MOUNT_NONE,
     add_scoring_grooves,
+    make_target_mount,
 )
 
 
@@ -33,12 +36,6 @@ def make_body_hard_cover_mask(
     thickness,
     body_top=DEFAULT_BODY_HARD_COVER_TOP,
 ):
-    """
-    USPSA Hardcover Version 1.
-
-    Hard cover occupies the entire main body of the target.
-    The head remains uncovered.
-    """
     points = [
         (-400.0, -100.0),
         (400.0, -100.0),
@@ -59,13 +56,6 @@ def make_diagonal_right_mask(
     shoulder_x=DEFAULT_DIAGONAL_SHOULDER_X,
     bottom_x=DEFAULT_DIAGONAL_BOTTOM_X,
 ):
-    """
-    USPSA Hardcover Version 2.
-
-    Hard cover occupies the right side of the finished target.
-    The diagonal runs from the upper-right shoulder to the
-    lower-left edge of the target body.
-    """
     points = [
         (400.0, 850.0),
         (400.0, -100.0),
@@ -86,13 +76,6 @@ def make_diagonal_left_mask(
     shoulder_x=DEFAULT_DIAGONAL_SHOULDER_X,
     bottom_x=DEFAULT_DIAGONAL_BOTTOM_X,
 ):
-    """
-    USPSA Hardcover Version 3.
-
-    Hard cover occupies the left side of the finished target.
-    The diagonal runs from the upper-left shoulder to the
-    lower-right edge of the target body.
-    """
     points = [
         (-400.0, 850.0),
         (-shoulder_x, 600.0),
@@ -113,13 +96,6 @@ def make_tuxedo_mask(
     center_width=DEFAULT_TUXEDO_CENTER_WIDTH,
     body_top=DEFAULT_TUXEDO_BODY_TOP,
 ):
-    """
-    USPSA Hardcover Version 4.
-
-    Hard cover occupies both sides of the target body while
-    leaving a centered scoring strip exposed. The head remains
-    uncovered.
-    """
     half_center_width = center_width / 2
 
     left_points = [
@@ -156,11 +132,6 @@ def make_lower_half_hard_cover_mask(
     thickness,
     cover_top=DEFAULT_LOWER_HALF_HARD_COVER_TOP,
 ):
-    """
-    USPSA Hardcover Version 5.
-
-    Hard cover occupies the lower portion of the target body.
-    """
     points = [
         (-400.0, -100.0),
         (400.0, -100.0),
@@ -181,17 +152,8 @@ def make_right_half_mask(
     center_width=DEFAULT_TUXEDO_CENTER_WIDTH,
     body_top=DEFAULT_TUXEDO_BODY_TOP,
 ):
-    """
-    USPSA Hardcover Version 6.
-
-    This is the right-side half of the Tuxedo hard-cover pattern.
-    The target keeps the same exposed center area as the Tuxedo
-    target, with hard cover only on the right.
-    """
     half_center_width = center_width / 2
 
-    # build_hard_cover_target() rotates the finished geometry 180
-    # degrees, so the pre-rotation mask is placed on the left side.
     points = [
         (-400.0, -100.0),
         (-half_center_width, -100.0),
@@ -212,17 +174,8 @@ def make_left_half_mask(
     center_width=DEFAULT_TUXEDO_CENTER_WIDTH,
     body_top=DEFAULT_TUXEDO_BODY_TOP,
 ):
-    """
-    USPSA Hardcover Version 7.
-
-    This is the left-side half of the Tuxedo hard-cover pattern.
-    The target keeps the same exposed center area as the Tuxedo
-    target, with hard cover only on the left.
-    """
     half_center_width = center_width / 2
 
-    # build_hard_cover_target() rotates the finished geometry 180
-    # degrees, so the pre-rotation mask is placed on the right side.
     points = [
         (half_center_width, -100.0),
         (400.0, -100.0),
@@ -245,6 +198,8 @@ def build_hard_cover_target(
     groove_depth,
     hard_cover_mask,
     face_layer_thickness=DEFAULT_FACE_LAYER_THICKNESS,
+    mount=MOUNT_NONE,
+    mount_layout=MOUNT_LAYOUT_TOP_BOTTOM,
 ):
     document = App.newDocument(
         document_name
@@ -268,6 +223,18 @@ def build_hard_cover_target(
         back_thickness,
         z_offset=face_layer_thickness,
     )
+
+    mount_shape = make_target_mount(
+        mount,
+        scale,
+        thickness,
+        mount_layout=mount_layout,
+    )
+
+    if mount_shape is not None:
+        back_shape = back_shape.fuse(
+            mount_shape
+        ).removeSplitter()
 
     face_layer = make_extruded_polygon(
         TARGET_OUTLINE,
@@ -385,6 +352,8 @@ def create_body_hard_cover_target(
     groove_width=DEFAULT_GROOVE_WIDTH,
     groove_depth=DEFAULT_GROOVE_DEPTH,
     face_layer_thickness=DEFAULT_FACE_LAYER_THICKNESS,
+    mount=MOUNT_NONE,
+    mount_layout=MOUNT_LAYOUT_TOP_BOTTOM,
 ):
     body_mask = make_body_hard_cover_mask(
         scale,
@@ -399,6 +368,8 @@ def create_body_hard_cover_target(
         groove_depth=groove_depth,
         hard_cover_mask=body_mask,
         face_layer_thickness=face_layer_thickness,
+        mount=mount,
+        mount_layout=mount_layout,
     )
 
 
@@ -408,6 +379,8 @@ def create_diagonal_right_target(
     groove_width=DEFAULT_GROOVE_WIDTH,
     groove_depth=DEFAULT_GROOVE_DEPTH,
     face_layer_thickness=DEFAULT_FACE_LAYER_THICKNESS,
+    mount=MOUNT_NONE,
+    mount_layout=MOUNT_LAYOUT_TOP_BOTTOM,
 ):
     diagonal_mask = make_diagonal_right_mask(
         scale,
@@ -422,6 +395,8 @@ def create_diagonal_right_target(
         groove_depth=groove_depth,
         hard_cover_mask=diagonal_mask,
         face_layer_thickness=face_layer_thickness,
+        mount=mount,
+        mount_layout=mount_layout,
     )
 
 
@@ -431,6 +406,8 @@ def create_diagonal_left_target(
     groove_width=DEFAULT_GROOVE_WIDTH,
     groove_depth=DEFAULT_GROOVE_DEPTH,
     face_layer_thickness=DEFAULT_FACE_LAYER_THICKNESS,
+    mount=MOUNT_NONE,
+    mount_layout=MOUNT_LAYOUT_TOP_BOTTOM,
 ):
     diagonal_mask = make_diagonal_left_mask(
         scale,
@@ -445,6 +422,8 @@ def create_diagonal_left_target(
         groove_depth=groove_depth,
         hard_cover_mask=diagonal_mask,
         face_layer_thickness=face_layer_thickness,
+        mount=mount,
+        mount_layout=mount_layout,
     )
 
 
@@ -455,6 +434,8 @@ def create_tuxedo_target(
     groove_depth=DEFAULT_GROOVE_DEPTH,
     center_width=DEFAULT_TUXEDO_CENTER_WIDTH,
     face_layer_thickness=DEFAULT_FACE_LAYER_THICKNESS,
+    mount=MOUNT_NONE,
+    mount_layout=MOUNT_LAYOUT_TOP_BOTTOM,
 ):
     tuxedo_mask = make_tuxedo_mask(
         scale,
@@ -470,6 +451,8 @@ def create_tuxedo_target(
         groove_depth=groove_depth,
         hard_cover_mask=tuxedo_mask,
         face_layer_thickness=face_layer_thickness,
+        mount=mount,
+        mount_layout=mount_layout,
     )
 
 
@@ -479,6 +462,8 @@ def create_lower_half_hard_cover_target(
     groove_width=DEFAULT_GROOVE_WIDTH,
     groove_depth=DEFAULT_GROOVE_DEPTH,
     face_layer_thickness=DEFAULT_FACE_LAYER_THICKNESS,
+    mount=MOUNT_NONE,
+    mount_layout=MOUNT_LAYOUT_TOP_BOTTOM,
 ):
     lower_half_mask = (
         make_lower_half_hard_cover_mask(
@@ -495,6 +480,8 @@ def create_lower_half_hard_cover_target(
         groove_depth=groove_depth,
         hard_cover_mask=lower_half_mask,
         face_layer_thickness=face_layer_thickness,
+        mount=mount,
+        mount_layout=mount_layout,
     )
 
 
@@ -504,6 +491,8 @@ def create_right_half_target(
     groove_width=DEFAULT_GROOVE_WIDTH,
     groove_depth=DEFAULT_GROOVE_DEPTH,
     face_layer_thickness=DEFAULT_FACE_LAYER_THICKNESS,
+    mount=MOUNT_NONE,
+    mount_layout=MOUNT_LAYOUT_TOP_BOTTOM,
 ):
     right_half_mask = make_right_half_mask(
         scale,
@@ -518,6 +507,8 @@ def create_right_half_target(
         groove_depth=groove_depth,
         hard_cover_mask=right_half_mask,
         face_layer_thickness=face_layer_thickness,
+        mount=mount,
+        mount_layout=mount_layout,
     )
 
 
@@ -527,6 +518,8 @@ def create_left_half_target(
     groove_width=DEFAULT_GROOVE_WIDTH,
     groove_depth=DEFAULT_GROOVE_DEPTH,
     face_layer_thickness=DEFAULT_FACE_LAYER_THICKNESS,
+    mount=MOUNT_NONE,
+    mount_layout=MOUNT_LAYOUT_TOP_BOTTOM,
 ):
     left_half_mask = make_left_half_mask(
         scale,
@@ -541,6 +534,8 @@ def create_left_half_target(
         groove_depth=groove_depth,
         hard_cover_mask=left_half_mask,
         face_layer_thickness=face_layer_thickness,
+        mount=mount,
+        mount_layout=mount_layout,
     )
 
 
@@ -551,6 +546,8 @@ def create_center_stripe_target(
     groove_depth=DEFAULT_GROOVE_DEPTH,
     stripe_width=DEFAULT_CENTER_STRIPE_WIDTH,
     face_layer_thickness=DEFAULT_FACE_LAYER_THICKNESS,
+    mount=MOUNT_NONE,
+    mount_layout=MOUNT_LAYOUT_TOP_BOTTOM,
 ):
     stripe_mask = make_centered_rectangle(
         stripe_width,
@@ -568,4 +565,6 @@ def create_center_stripe_target(
         groove_depth=groove_depth,
         hard_cover_mask=stripe_mask,
         face_layer_thickness=face_layer_thickness,
+        mount=mount,
+        mount_layout=mount_layout,
     )

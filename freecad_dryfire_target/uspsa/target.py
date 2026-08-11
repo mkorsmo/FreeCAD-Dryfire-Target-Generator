@@ -27,10 +27,29 @@ from freecad_dryfire_target.uspsa.dimensions import (
 )
 
 
-VERTICAL_PVC_TEST_CLIP_POSITIONS = [
-    (0.0, 150.0),
-    (0.0, 450.0),
-]
+MOUNT_NONE = "none"
+MOUNT_VERTICAL_PVC = "vertical_pvc"
+
+MOUNT_LAYOUT_TOP_BOTTOM = "top_bottom"
+MOUNT_LAYOUT_TOP = "top"
+MOUNT_LAYOUT_MIDDLE = "middle"
+MOUNT_LAYOUT_BOTTOM = "bottom"
+
+VERTICAL_PVC_CLIP_LAYOUTS = {
+    MOUNT_LAYOUT_TOP: [
+        (0.0, 450.0),
+    ],
+    MOUNT_LAYOUT_MIDDLE: [
+        (0.0, 300.0),
+    ],
+    MOUNT_LAYOUT_BOTTOM: [
+        (0.0, 150.0),
+    ],
+    MOUNT_LAYOUT_TOP_BOTTOM: [
+        (0.0, 450.0),
+        (0.0, 150.0),
+    ],
+}
 
 
 def make_target_outline(
@@ -110,22 +129,103 @@ def add_scoring_grooves(
     return target_shape
 
 
+def make_target_mount(
+    mount,
+    scale,
+    thickness,
+    mount_layout=MOUNT_LAYOUT_TOP_BOTTOM,
+):
+    if mount in (
+        None,
+        MOUNT_NONE,
+    ):
+        return None
+
+    if mount == MOUNT_VERTICAL_PVC:
+        full_scale_positions = (
+            VERTICAL_PVC_CLIP_LAYOUTS.get(
+                mount_layout
+            )
+        )
+
+        if full_scale_positions is None:
+            raise ValueError(
+                f"Unknown vertical PVC clip layout: {mount_layout}"
+            )
+
+        clip_positions = [
+            (
+                x * scale,
+                y * scale,
+            )
+            for x, y in full_scale_positions
+        ]
+
+        return make_vertical_pvc_clips(
+            positions=clip_positions,
+            z_offset=thickness,
+        )
+
+    raise ValueError(
+        f"Unknown USPSA mount type: {mount}"
+    )
+
+
 def create_target(
     scale=DEFAULT_SCALE,
     thickness=DEFAULT_THICKNESS,
     groove_width=DEFAULT_GROOVE_WIDTH,
     groove_depth=DEFAULT_GROOVE_DEPTH,
+    mount=MOUNT_NONE,
+    mount_layout=MOUNT_LAYOUT_TOP_BOTTOM,
 ):
     document = App.newDocument(
         "USPSA_DryFire_Target"
     )
 
-    target_shape = make_scored_target_shape(
-        scale,
-        thickness,
-        groove_width,
-        groove_depth,
-    )
+    if mount == MOUNT_NONE:
+        target_shape = make_scored_target_shape(
+            scale,
+            thickness,
+            groove_width,
+            groove_depth,
+        )
+
+        view_face = "top"
+
+    else:
+        target_shape = make_target_outline(
+            scale,
+            thickness,
+        )
+
+        target_shape = add_scoring_grooves(
+            target_shape,
+            scale,
+            thickness,
+            groove_width,
+            groove_depth,
+            face="bottom",
+        )
+
+        mount_shape = make_target_mount(
+            mount,
+            scale,
+            thickness,
+            mount_layout=mount_layout,
+        )
+
+        target_shape = target_shape.fuse(
+            mount_shape
+        ).removeSplitter()
+
+        target_shape.rotate(
+            App.Vector(0, 0, 0),
+            App.Vector(0, 0, 1),
+            180,
+        )
+
+        view_face = "bottom"
 
     target = document.addObject(
         "Part::Feature",
@@ -144,87 +244,12 @@ def create_target(
     document.recompute()
 
     view = Gui.activeDocument().activeView()
-    view.viewTop()
-    view.fitAll()
 
-    return target
+    if view_face == "bottom":
+        view.viewBottom()
+    else:
+        view.viewTop()
 
-
-def create_vertical_pvc_mount_test_target(
-    scale=DEFAULT_SCALE,
-    thickness=DEFAULT_THICKNESS,
-    groove_width=DEFAULT_GROOVE_WIDTH,
-    groove_depth=DEFAULT_GROOVE_DEPTH,
-):
-    """
-    Create a full USPSA target with two vertical 1/2-inch PVC clips.
-
-    This is intentionally a test-only creator. The target face is at
-    Z=0 and the clips grow from the back at Z=thickness so the entire
-    part can be printed face-down.
-    """
-    document = App.newDocument(
-        "USPSA_Vertical_PVC_Mount_Test"
-    )
-
-    target_shape = make_target_outline(
-        scale,
-        thickness,
-    )
-
-    target_shape = add_scoring_grooves(
-        target_shape,
-        scale,
-        thickness,
-        groove_width,
-        groove_depth,
-        face="bottom",
-    )
-
-    clip_positions = [
-        (
-            x * scale,
-            y * scale,
-        )
-        for x, y in VERTICAL_PVC_TEST_CLIP_POSITIONS
-    ]
-
-    clips = make_vertical_pvc_clips(
-        positions=clip_positions,
-        z_offset=thickness,
-    )
-
-    target_shape = target_shape.fuse(
-        clips
-    ).removeSplitter()
-
-    target_shape.rotate(
-        App.Vector(0, 0, 0),
-        App.Vector(0, 0, 1),
-        180,
-    )
-
-    target = document.addObject(
-        "Part::Feature",
-        "USPSA_Vertical_PVC_Mount_Test",
-    )
-
-    target.Label = (
-        "USPSA Vertical 1/2 PVC Mount Test"
-    )
-
-    target.Shape = target_shape
-
-    target.ViewObject.ShapeColor = (
-        0.76,
-        0.56,
-        0.32,
-    )
-
-    document.recompute()
-
-    view = Gui.activeDocument().activeView()
-    view.viewBottom()
     view.fitAll()
 
     return target
