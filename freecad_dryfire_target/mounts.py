@@ -15,7 +15,7 @@ DEFAULT_HOOK_HEIGHT = 4.0
 DEFAULT_PAD_THICKNESS = 2.00
 DEFAULT_PAD_MARGIN_X = 2.5
 DEFAULT_PAD_MARGIN_Y = 3.0
-DEFAULT_GUSSET_HEIGHT = 4.0
+DEFAULT_GUSSET_HEIGHT = DEFAULT_ARM_HEIGHT
 DEFAULT_GUSSET_PROJECTION = 2.0
 
 DEFAULT_TEST_PLATE_WIDTH = 44.0
@@ -78,7 +78,7 @@ def make_vertical_pvc_clip(
 
     The proven PVC clearance and hook geometry are retained. V1 adds
     a slightly thicker pad and arms, a little more clip length, and
-    external triangular gussets at the arm roots.
+    full-height tapered external gussets along the clip arms.
     """
     inner_gap = pvc_od + diametral_clearance
 
@@ -326,7 +326,7 @@ def create_vertical_pvc_clip_test(
     )
 
     coupon.Label = (
-        "Vertical 1/2 PVC Clip Test - Reinforced V1"
+        "Vertical 1/2 PVC Clip Test - Reinforced V1 Full Gusset"
     )
 
     coupon.Shape = coupon_shape
