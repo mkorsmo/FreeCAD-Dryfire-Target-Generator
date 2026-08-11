@@ -25,7 +25,8 @@ DEFAULT_DIAGONAL_SHOULDER_X = 150.0
 DEFAULT_DIAGONAL_BOTTOM_X = 150.0
 DEFAULT_TUXEDO_CENTER_WIDTH = 150.0
 DEFAULT_TUXEDO_BODY_TOP = 600.0
-DEFAULT_HALF_HARD_COVER_BODY_TOP = 600.0
+DEFAULT_BODY_HARD_COVER_TOP = 600.0
+DEFAULT_LOWER_HALF_HARD_COVER_TOP = 475.0
 
 
 TARGET_OUTLINE = [
@@ -261,19 +262,25 @@ def make_tuxedo_mask(
 def make_right_half_mask(
     scale,
     thickness,
-    body_top=DEFAULT_HALF_HARD_COVER_BODY_TOP,
+    center_width=DEFAULT_TUXEDO_CENTER_WIDTH,
+    body_top=DEFAULT_TUXEDO_BODY_TOP,
 ):
     """
     USPSA Hardcover Version 6.
 
-    Hard cover occupies the right half of the finished target body.
-    The head remains uncovered.
+    This is the RIGHT-side half of the Tuxedo hard-cover pattern.
+    The finished target keeps the same 150 mm-wide exposed center
+    area as the Tuxedo target, with hard cover only on the right.
     """
+    half_center_width = center_width / 2
+
+    # build_hard_cover_target() rotates the finished geometry 180
+    # degrees, so the pre-rotation mask is placed on the left side.
     points = [
-        (0.0, 0.0),
-        (400.0, 0.0),
-        (400.0, body_top),
-        (0.0, body_top),
+        (-400.0, -100.0),
+        (-half_center_width, -100.0),
+        (-half_center_width, body_top),
+        (-400.0, body_top),
     ]
 
     return make_extruded_polygon(
@@ -286,19 +293,75 @@ def make_right_half_mask(
 def make_left_half_mask(
     scale,
     thickness,
-    body_top=DEFAULT_HALF_HARD_COVER_BODY_TOP,
+    center_width=DEFAULT_TUXEDO_CENTER_WIDTH,
+    body_top=DEFAULT_TUXEDO_BODY_TOP,
 ):
     """
     USPSA Hardcover Version 7.
 
-    Hard cover occupies the left half of the finished target body.
+    This is the LEFT-side half of the Tuxedo hard-cover pattern.
+    The finished target keeps the same 150 mm-wide exposed center
+    area as the Tuxedo target, with hard cover only on the left.
+    """
+    half_center_width = center_width / 2
+
+    # build_hard_cover_target() rotates the finished geometry 180
+    # degrees, so the pre-rotation mask is placed on the right side.
+    points = [
+        (half_center_width, -100.0),
+        (400.0, -100.0),
+        (400.0, body_top),
+        (half_center_width, body_top),
+    ]
+
+    return make_extruded_polygon(
+        points,
+        scale,
+        thickness,
+    )
+
+
+def make_body_hard_cover_mask(
+    scale,
+    thickness,
+    body_top=DEFAULT_BODY_HARD_COVER_TOP,
+):
+    """
+    USPSA Hardcover Version 1.
+
+    Hard cover occupies the entire main body of the target.
     The head remains uncovered.
     """
     points = [
-        (-400.0, 0.0),
-        (0.0, 0.0),
-        (0.0, body_top),
+        (-400.0, -100.0),
+        (400.0, -100.0),
+        (400.0, body_top),
         (-400.0, body_top),
+    ]
+
+    return make_extruded_polygon(
+        points,
+        scale,
+        thickness,
+    )
+
+
+def make_lower_half_hard_cover_mask(
+    scale,
+    thickness,
+    cover_top=DEFAULT_LOWER_HALF_HARD_COVER_TOP,
+):
+    """
+    USPSA Hardcover Version 5.
+
+    Hard cover occupies the lower half of the full 750 mm target,
+    ending at 375 mm from the bottom.
+    """
+    points = [
+        (-400.0, -100.0),
+        (400.0, -100.0),
+        (400.0, cover_top),
+        (-400.0, cover_top),
     ]
 
     return make_extruded_polygon(
@@ -443,6 +506,52 @@ def create_target(
     Gui.activeDocument().activeView().fitAll()
 
     return target
+
+
+def create_body_hard_cover_target(
+    scale=DEFAULT_SCALE,
+    thickness=DEFAULT_THICKNESS,
+    groove_width=DEFAULT_GROOVE_WIDTH,
+    groove_depth=DEFAULT_GROOVE_DEPTH,
+    face_layer_thickness=DEFAULT_FACE_LAYER_THICKNESS,
+):
+    body_mask = make_body_hard_cover_mask(
+        scale,
+        face_layer_thickness,
+    )
+
+    return build_hard_cover_target(
+        document_name="USPSA_Body_Hard_Cover_Target",
+        scale=scale,
+        thickness=thickness,
+        groove_width=groove_width,
+        groove_depth=groove_depth,
+        hard_cover_mask=body_mask,
+        face_layer_thickness=face_layer_thickness,
+    )
+
+
+def create_lower_half_hard_cover_target(
+    scale=DEFAULT_SCALE,
+    thickness=DEFAULT_THICKNESS,
+    groove_width=DEFAULT_GROOVE_WIDTH,
+    groove_depth=DEFAULT_GROOVE_DEPTH,
+    face_layer_thickness=DEFAULT_FACE_LAYER_THICKNESS,
+):
+    lower_half_mask = make_lower_half_hard_cover_mask(
+        scale,
+        face_layer_thickness,
+    )
+
+    return build_hard_cover_target(
+        document_name="USPSA_Lower_Half_Hard_Cover_Target",
+        scale=scale,
+        thickness=thickness,
+        groove_width=groove_width,
+        groove_depth=groove_depth,
+        hard_cover_mask=lower_half_mask,
+        face_layer_thickness=face_layer_thickness,
+    )
 
 
 def create_center_stripe_target(
@@ -607,6 +716,64 @@ def show_target_dialog():
     settings = dialog.get_settings()
 
     create_target(
+        scale=settings["scale"],
+        thickness=settings["thickness"],
+        groove_width=settings["groove_width"],
+        groove_depth=settings["groove_depth"],
+    )
+
+
+def show_body_hard_cover_dialog():
+    dialog = TargetSettingsDialog(
+        title="USPSA Body Hard Cover",
+        target_width=TARGET_WIDTH,
+        target_height=TARGET_HEIGHT,
+        default_scale=DEFAULT_SCALE,
+        default_thickness=DEFAULT_THICKNESS,
+        default_groove_width=DEFAULT_GROOVE_WIDTH,
+        default_groove_depth=DEFAULT_GROOVE_DEPTH,
+        parent=Gui.getMainWindow(),
+    )
+
+    if not dialog.exec():
+        return
+
+    settings = dialog.get_settings()
+
+    App.Console.PrintMessage(
+        "Body hard cover uses face-down split parts.\n"
+    )
+
+    create_body_hard_cover_target(
+        scale=settings["scale"],
+        thickness=settings["thickness"],
+        groove_width=settings["groove_width"],
+        groove_depth=settings["groove_depth"],
+    )
+
+
+def show_lower_half_hard_cover_dialog():
+    dialog = TargetSettingsDialog(
+        title="USPSA Lower Half Hard Cover",
+        target_width=TARGET_WIDTH,
+        target_height=TARGET_HEIGHT,
+        default_scale=DEFAULT_SCALE,
+        default_thickness=DEFAULT_THICKNESS,
+        default_groove_width=DEFAULT_GROOVE_WIDTH,
+        default_groove_depth=DEFAULT_GROOVE_DEPTH,
+        parent=Gui.getMainWindow(),
+    )
+
+    if not dialog.exec():
+        return
+
+    settings = dialog.get_settings()
+
+    App.Console.PrintMessage(
+        "Lower Half hard cover uses face-down split parts.\n"
+    )
+
+    create_lower_half_hard_cover_target(
         scale=settings["scale"],
         thickness=settings["thickness"],
         groove_width=settings["groove_width"],
@@ -797,6 +964,34 @@ class CreateUSPSATargetCommand:
 
     def Activated(self):
         show_target_dialog()
+
+    def IsActive(self):
+        return True
+
+
+class CreateUSPSABodyHardCoverCommand:
+    def GetResources(self):
+        return {
+            "MenuText": "USPSA Body Hard Cover",
+            "ToolTip": "Create USPSA Hardcover Version 1",
+        }
+
+    def Activated(self):
+        show_body_hard_cover_dialog()
+
+    def IsActive(self):
+        return True
+
+
+class CreateUSPSALowerHalfHardCoverCommand:
+    def GetResources(self):
+        return {
+            "MenuText": "USPSA Lower Half Hard Cover",
+            "ToolTip": "Create USPSA Hardcover Version 5",
+        }
+
+    def Activated(self):
+        show_lower_half_hard_cover_dialog()
 
     def IsActive(self):
         return True
