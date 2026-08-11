@@ -2,9 +2,9 @@
 
 A FreeCAD workbench for generating parametric, 3D-printable dry-fire targets.
 
-The project started as a way to replace fixed PDF/image-based dry-fire targets with actual CAD geometry. Targets can be generated at common reduced scales, custom scales, or sized to simulate a greater shooting distance while keeping the target at a practical indoor distance.
+The project replaces fixed PDF/image-based dry-fire targets with actual CAD geometry. Targets can be generated at common reduced scales, custom scales, or sized to simulate a greater shooting distance while keeping the target at a practical indoor distance.
 
-Current target support is focused on USPSA cardboard targets, including scoring zones and several common hard-cover configurations.
+Current target support is focused on USPSA cardboard targets, including scoring zones, common hard-cover configurations, and optional snap-on mounting for nominal 1/2-inch PVC.
 
 ## Features
 
@@ -23,6 +23,12 @@ Current target support is focused on USPSA cardboard targets, including scoring 
   - scoring-groove depth
 - Multiple USPSA hard-cover patterns
 - Face-down multipart construction for hard-cover targets
+- Optional reinforced snap-on mount for nominal 1/2-inch PVC
+- Configurable PVC clip layouts:
+  - Top + Bottom
+  - Top
+  - Middle
+  - Bottom
 - Reload command for faster development without restarting FreeCAD for normal Python-module changes
 
 ## USPSA Target Types
@@ -57,7 +63,7 @@ Common generated sizes are:
 
 ### Simulated Distance
 
-The generator can also calculate scale based on an actual shooting distance and a desired simulated distance.
+The generator can calculate scale based on an actual shooting distance and a desired simulated distance.
 
 For example, placing a target at 10 feet and asking it to represent a target at 30 feet produces:
 
@@ -79,11 +85,49 @@ Instead of simply placing black geometry on top of a finished target, the genera
 - the exposed cardboard face
 - the hard-cover face
 
-Scoring grooves are cut only into the exposed cardboard areas.
+Scoring grooves are cut only into exposed cardboard areas.
 
 This lets the target print with the visible face against the build plate while preserving separate cardboard and hard-cover regions for slicer assignment.
 
 When exporting a hard-cover target, keep the generated parts aligned and import them into the slicer together as parts of the same object.
+
+## 1/2-Inch PVC Mount
+
+Targets can optionally be generated with reinforced snap clips for nominal 1/2-inch PVC pipe.
+
+The clip is designed around a nominal 1/2-inch PVC outside diameter of approximately 21.34 mm. The clip geometry stays at its real physical size regardless of target scale.
+
+The current V1 clip uses:
+
+- 0.40 mm diametral clearance
+- 20 mm clip length
+- 2.6 mm arm thickness
+- 2.0 mm mounting pad
+- 1.0 mm retaining-hook projection
+- full-height tapered external gussets
+
+The mount is designed to print as part of the target without support while the visible target face remains against the build plate.
+
+### Clip Layout
+
+The generator currently supports four layouts:
+
+| Layout | Description |
+| --- | --- |
+| Top + Bottom | Two clips; the default and most rigid layout |
+| Top | Single clip in the same upper position used by Top + Bottom |
+| Middle | Single centered clip |
+| Bottom | Single clip in the same lower position used by Top + Bottom |
+
+At full scale, the current USPSA clip positions are:
+
+```text
+Top:       450 mm
+Middle:    300 mm
+Bottom:    150 mm
+```
+
+These positions scale with the target, while the clip itself does not.
 
 ## Installation
 
@@ -120,9 +164,11 @@ Restart FreeCAD after initially installing the workbench or after changing `Init
 2. Select **Dry Fire Targets** from the workbench selector.
 3. Click **Create USPSA Target**.
 4. Select the desired target type.
-5. Choose a scale preset, custom scale, or simulated-distance mode.
-6. Adjust print geometry if needed.
-7. Click **OK** to generate the target.
+5. Optionally select **Vertical 1/2" PVC** as the back mount.
+6. If using the PVC mount, choose a clip layout.
+7. Choose a scale preset, custom scale, or simulated-distance mode.
+8. Adjust print geometry if needed.
+9. Click **OK** to generate the target.
 
 The default target settings are:
 
@@ -139,11 +185,11 @@ A 1/3-scale USPSA target is approximately 150 × 250 mm.
 
 The generated geometry is intended for normal FDM printing.
 
-For standard targets, orient the scoring face as desired for your printer and preferred surface finish.
-
-Hard-cover targets are specifically constructed for **face-down printing**. The cardboard and hard-cover face geometry is placed against the build plate, with the structural backing above it.
+Hard-cover targets and targets with PVC mounts are constructed for **face-down printing**. The visible cardboard/hard-cover face is placed against the build plate, while the structural backing and mount geometry build upward.
 
 Because printer tolerances, first-layer behavior, filament, and slicer settings vary, inspect the sliced model before printing.
+
+The PVC snap fit has been designed around the dimensions above, but printer calibration and material choice can affect fit and flexibility.
 
 ## Project Structure
 
@@ -153,6 +199,7 @@ FreeCAD-Dryfire-Target-Generator/
 │   ├── commands.py
 │   ├── dialog.py
 │   ├── geometry.py
+│   ├── mounts.py
 │   ├── __init__.py
 │   └── uspsa/
 │       ├── commands.py
@@ -169,21 +216,26 @@ FreeCAD-Dryfire-Target-Generator/
 The code is intentionally split so that generic workbench/UI/geometry functionality stays separate from USPSA-specific geometry.
 
 - `geometry.py` contains reusable geometry helpers.
+- `mounts.py` contains reusable physical mount geometry.
 - `dialog.py` contains the generic target settings dialog.
 - `uspsa/dimensions.py` contains USPSA dimensions and defaults.
-- `uspsa/target.py` builds the standard target and scoring geometry.
+- `uspsa/target.py` builds the standard target, scoring geometry, and USPSA mount placement.
 - `uspsa/hardcover.py` contains hard-cover masks and multipart target construction.
-- `uspsa/commands.py` connects USPSA target types to the FreeCAD UI.
+- `uspsa/commands.py` connects USPSA target and mount choices to the FreeCAD UI.
 
-This structure is intended to make additional target families easier to add without turning the USPSA implementation into one large module.
+This structure is intended to make additional target families and mounting systems easier to add without turning the USPSA implementation into one large module.
 
 ## Development
 
 The project is actively evolving.
 
-Current areas of experimentation include optional target mounting systems, including snap-on mounting for nominal 1/2-inch PVC.
+Potential future work includes:
 
-Other target types and training-target features may be added over time.
+- replaceable/removable PVC clip cartridges
+- additional mount orientations
+- additional target families
+- no-shoot targets
+- other dry-fire training geometry
 
 The **Reload Dry Fire Targets** command reloads the Python modules used by the workbench, which is useful while editing target geometry. Changes to `InitGui.py` generally require restarting FreeCAD.
 
