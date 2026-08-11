@@ -28,19 +28,42 @@ from freecad_dryfire_target.uspsa.target import (
 )
 
 
-def show_create_dialog(
-    title,
-    creator,
-    message=None,
-):
+TARGET_TYPES = [
+    ("Standard USPSA", "standard"),
+    ("Hard Cover V1 - Body", "body"),
+    ("Hard Cover V2 - Diagonal Right", "diagonal_right"),
+    ("Hard Cover V3 - Diagonal Left", "diagonal_left"),
+    ("Hard Cover V4 - Tuxedo", "tuxedo"),
+    ("Hard Cover V5 - Lower Half", "lower_half"),
+    ("Hard Cover V6 - Right Side", "right_side"),
+    ("Hard Cover V7 - Left Side", "left_side"),
+    ("Center Stripe", "center_stripe"),
+]
+
+
+TARGET_CREATORS = {
+    "standard": create_target,
+    "body": create_body_hard_cover_target,
+    "diagonal_right": create_diagonal_right_target,
+    "diagonal_left": create_diagonal_left_target,
+    "tuxedo": create_tuxedo_target,
+    "lower_half": create_lower_half_hard_cover_target,
+    "right_side": create_right_half_target,
+    "left_side": create_left_half_target,
+    "center_stripe": create_center_stripe_target,
+}
+
+
+def show_target_dialog():
     dialog = TargetSettingsDialog(
-        title=title,
+        title="USPSA Dry Fire Target",
         target_width=TARGET_WIDTH,
         target_height=TARGET_HEIGHT,
         default_scale=DEFAULT_SCALE,
         default_thickness=DEFAULT_THICKNESS,
         default_groove_width=DEFAULT_GROOVE_WIDTH,
         default_groove_depth=DEFAULT_GROOVE_DEPTH,
+        target_types=TARGET_TYPES,
         parent=Gui.getMainWindow(),
     )
 
@@ -48,10 +71,21 @@ def show_create_dialog(
         return
 
     settings = dialog.get_settings()
+    target_type = settings["target_type"]
 
-    if message:
+    creator = TARGET_CREATORS.get(
+        target_type
+    )
+
+    if creator is None:
+        App.Console.PrintError(
+            f"Unknown USPSA target type: {target_type}\n"
+        )
+        return
+
+    if target_type != "standard":
         App.Console.PrintMessage(
-            f"{message}\n"
+            "Hard cover target uses face-down split parts.\n"
         )
 
     creator(
@@ -62,228 +96,17 @@ def show_create_dialog(
     )
 
 
-def show_target_dialog():
-    show_create_dialog(
-        title="USPSA Cardboard Target",
-        creator=create_target,
-    )
-
-
-def show_body_hard_cover_dialog():
-    show_create_dialog(
-        title="USPSA Body Hard Cover",
-        creator=create_body_hard_cover_target,
-        message=(
-            "Body hard cover uses "
-            "face-down split parts."
-        ),
-    )
-
-
-def show_diagonal_right_dialog():
-    show_create_dialog(
-        title="USPSA Diagonal Right Hard Cover",
-        creator=create_diagonal_right_target,
-        message=(
-            "Diagonal Right hard cover uses "
-            "face-down split parts."
-        ),
-    )
-
-
-def show_diagonal_left_dialog():
-    show_create_dialog(
-        title="USPSA Diagonal Left Hard Cover",
-        creator=create_diagonal_left_target,
-        message=(
-            "Diagonal Left hard cover uses "
-            "face-down split parts."
-        ),
-    )
-
-
-def show_tuxedo_dialog():
-    show_create_dialog(
-        title="USPSA Tuxedo Hard Cover",
-        creator=create_tuxedo_target,
-        message=(
-            "Tuxedo hard cover uses "
-            "face-down split parts."
-        ),
-    )
-
-
-def show_lower_half_hard_cover_dialog():
-    show_create_dialog(
-        title="USPSA Lower Half Hard Cover",
-        creator=create_lower_half_hard_cover_target,
-        message=(
-            "Lower Half hard cover uses "
-            "face-down split parts."
-        ),
-    )
-
-
-def show_right_half_dialog():
-    show_create_dialog(
-        title="USPSA Right Half Hard Cover",
-        creator=create_right_half_target,
-        message=(
-            "Right Half hard cover uses "
-            "face-down split parts."
-        ),
-    )
-
-
-def show_left_half_dialog():
-    show_create_dialog(
-        title="USPSA Left Half Hard Cover",
-        creator=create_left_half_target,
-        message=(
-            "Left Half hard cover uses "
-            "face-down split parts."
-        ),
-    )
-
-
-def show_center_stripe_dialog():
-    show_create_dialog(
-        title="USPSA Center Stripe Hard Cover",
-        creator=create_center_stripe_target,
-        message=(
-            "Center Stripe hard cover uses "
-            "face-down split parts."
-        ),
-    )
-
-
 class CreateUSPSATargetCommand:
     def GetResources(self):
         return {
-            "MenuText": "USPSA Cardboard Target",
+            "MenuText": "Create USPSA Target",
             "ToolTip": (
-                "Create a scaled USPSA "
-                "cardboard dry fire target"
+                "Create a scaled USPSA dry fire target"
             ),
         }
 
     def Activated(self):
         show_target_dialog()
-
-    def IsActive(self):
-        return True
-
-
-class CreateUSPSABodyHardCoverCommand:
-    def GetResources(self):
-        return {
-            "MenuText": "USPSA Body Hard Cover",
-            "ToolTip": "Create USPSA Hardcover Version 1",
-        }
-
-    def Activated(self):
-        show_body_hard_cover_dialog()
-
-    def IsActive(self):
-        return True
-
-
-class CreateUSPSADiagonalRightCommand:
-    def GetResources(self):
-        return {
-            "MenuText": "USPSA Diagonal Right Hard Cover",
-            "ToolTip": "Create USPSA Hardcover Version 2",
-        }
-
-    def Activated(self):
-        show_diagonal_right_dialog()
-
-    def IsActive(self):
-        return True
-
-
-class CreateUSPSADiagonalLeftCommand:
-    def GetResources(self):
-        return {
-            "MenuText": "USPSA Diagonal Left Hard Cover",
-            "ToolTip": "Create USPSA Hardcover Version 3",
-        }
-
-    def Activated(self):
-        show_diagonal_left_dialog()
-
-    def IsActive(self):
-        return True
-
-
-class CreateUSPSATuxedoCommand:
-    def GetResources(self):
-        return {
-            "MenuText": "USPSA Tuxedo Hard Cover",
-            "ToolTip": "Create USPSA Hardcover Version 4",
-        }
-
-    def Activated(self):
-        show_tuxedo_dialog()
-
-    def IsActive(self):
-        return True
-
-
-class CreateUSPSALowerHalfHardCoverCommand:
-    def GetResources(self):
-        return {
-            "MenuText": "USPSA Lower Half Hard Cover",
-            "ToolTip": "Create USPSA Hardcover Version 5",
-        }
-
-    def Activated(self):
-        show_lower_half_hard_cover_dialog()
-
-    def IsActive(self):
-        return True
-
-
-class CreateUSPSARightHalfCommand:
-    def GetResources(self):
-        return {
-            "MenuText": "USPSA Right Half Hard Cover",
-            "ToolTip": "Create USPSA Hardcover Version 6",
-        }
-
-    def Activated(self):
-        show_right_half_dialog()
-
-    def IsActive(self):
-        return True
-
-
-class CreateUSPSALeftHalfCommand:
-    def GetResources(self):
-        return {
-            "MenuText": "USPSA Left Half Hard Cover",
-            "ToolTip": "Create USPSA Hardcover Version 7",
-        }
-
-    def Activated(self):
-        show_left_half_dialog()
-
-    def IsActive(self):
-        return True
-
-
-class CreateUSPSACenterStripeCommand:
-    def GetResources(self):
-        return {
-            "MenuText": "USPSA Center Stripe Hard Cover",
-            "ToolTip": (
-                "Create a USPSA center stripe "
-                "hard cover target"
-            ),
-        }
-
-    def Activated(self):
-        show_center_stripe_dialog()
 
     def IsActive(self):
         return True

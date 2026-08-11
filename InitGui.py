@@ -10,48 +10,8 @@ class DryFireTargetWorkbench(Workbench):
         from freecad_dryfire_target.uspsa import commands as uspsa_commands
 
         Gui.addCommand(
-            "DryFireTarget_USPSACardboard",
+            "DryFireTarget_USPSATarget",
             uspsa_commands.CreateUSPSATargetCommand(),
-        )
-
-        Gui.addCommand(
-            "DryFireTarget_USPSABodyHardCover",
-            uspsa_commands.CreateUSPSABodyHardCoverCommand(),
-        )
-
-        Gui.addCommand(
-            "DryFireTarget_USPSADiagonalRight",
-            uspsa_commands.CreateUSPSADiagonalRightCommand(),
-        )
-
-        Gui.addCommand(
-            "DryFireTarget_USPSADiagonalLeft",
-            uspsa_commands.CreateUSPSADiagonalLeftCommand(),
-        )
-
-        Gui.addCommand(
-            "DryFireTarget_USPSATuxedo",
-            uspsa_commands.CreateUSPSATuxedoCommand(),
-        )
-
-        Gui.addCommand(
-            "DryFireTarget_USPSALowerHalfHardCover",
-            uspsa_commands.CreateUSPSALowerHalfHardCoverCommand(),
-        )
-
-        Gui.addCommand(
-            "DryFireTarget_USPSARightHalf",
-            uspsa_commands.CreateUSPSARightHalfCommand(),
-        )
-
-        Gui.addCommand(
-            "DryFireTarget_USPSALeftHalf",
-            uspsa_commands.CreateUSPSALeftHalfCommand(),
-        )
-
-        Gui.addCommand(
-            "DryFireTarget_USPSACenterStripe",
-            uspsa_commands.CreateUSPSACenterStripeCommand(),
         )
 
         Gui.addCommand(
@@ -60,15 +20,7 @@ class DryFireTargetWorkbench(Workbench):
         )
 
         commands = [
-            "DryFireTarget_USPSACardboard",
-            "DryFireTarget_USPSABodyHardCover",
-            "DryFireTarget_USPSADiagonalRight",
-            "DryFireTarget_USPSADiagonalLeft",
-            "DryFireTarget_USPSATuxedo",
-            "DryFireTarget_USPSALowerHalfHardCover",
-            "DryFireTarget_USPSARightHalf",
-            "DryFireTarget_USPSALeftHalf",
-            "DryFireTarget_USPSACenterStripe",
+            "DryFireTarget_USPSATarget",
             "Separator",
             "DryFireTarget_Reload",
         ]

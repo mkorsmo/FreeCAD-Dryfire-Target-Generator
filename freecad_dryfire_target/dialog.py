@@ -11,12 +11,14 @@ class TargetSettingsDialog(QtWidgets.QDialog):
         default_thickness,
         default_groove_width,
         default_groove_depth,
+        target_types=None,
         parent=None,
     ):
         super().__init__(parent)
 
         self.target_width = target_width
         self.target_height = target_height
+        self.target_types = target_types
 
         self.setWindowTitle(title)
         self.setMinimumWidth(360)
@@ -40,6 +42,24 @@ class TargetSettingsDialog(QtWidgets.QDialog):
         default_groove_depth,
     ):
         layout = QtWidgets.QVBoxLayout(self)
+
+        self.target_type_combo = None
+
+        if self.target_types:
+            target_group = QtWidgets.QGroupBox("Target")
+            target_layout = QtWidgets.QFormLayout(target_group)
+
+            self.target_type_combo = QtWidgets.QComboBox()
+
+            for label, value in self.target_types:
+                self.target_type_combo.addItem(label, value)
+
+            target_layout.addRow(
+                "Target type:",
+                self.target_type_combo,
+            )
+
+            layout.addWidget(target_group)
 
         scale_group = QtWidgets.QGroupBox("Scale")
         scale_layout = QtWidgets.QFormLayout(scale_group)
@@ -208,10 +228,8 @@ class TargetSettingsDialog(QtWidgets.QDialog):
         distance = mode == "distance"
 
         self.custom_scale.setEnabled(custom)
-
         self.actual_distance.setEnabled(distance)
         self.simulated_distance.setEnabled(distance)
-
         self.calculated_scale_label.setEnabled(distance)
 
     def update_target_size(self):
@@ -253,9 +271,16 @@ class TargetSettingsDialog(QtWidgets.QDialog):
         return mode
 
     def get_settings(self):
-        return {
+        settings = {
             "scale": self.get_scale(),
             "thickness": self.thickness.value(),
             "groove_width": self.groove_width.value(),
             "groove_depth": self.groove_depth.value(),
         }
+
+        if self.target_type_combo:
+            settings["target_type"] = (
+                self.target_type_combo.currentData()
+            )
+
+        return settings
