@@ -476,7 +476,7 @@ def create_tabletop_pvc_socket_test(
         "App::PropertyLength",
         "SocketDiametralClearance",
         "PVC Stand",
-    )git
+    )
 
     test.PVCOutsideDiameter = pvc_od
     test.SocketDiametralClearance = (
