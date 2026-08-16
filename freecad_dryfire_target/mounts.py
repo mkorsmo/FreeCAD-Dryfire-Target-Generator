@@ -644,6 +644,21 @@ def create_exact_french_cleat_interface_test():
         hanger,
     )
 
+# Supportless internal socket roof for the overbuilt reference hanger.
+#
+# The exact overbuilt PVC-side hanger geometry is preserved externally.
+# Only the inside of the socket is changed:
+#   - the upper bore is filled back in
+#   - a 45-degree conical cavity is cut into that fill
+#   - the cone ends in a 5 mm diameter flat bridge
+#   - 2 mm of solid material remains above that bridge
+OVERBUILT_SOCKET_BORE_DIAMETER = 21.40
+OVERBUILT_SOCKET_BORE_RADIUS = OVERBUILT_SOCKET_BORE_DIAMETER / 2
+OVERBUILT_SOCKET_TOP_Z = 40.0
+OVERBUILT_SOCKET_TOP_THICKNESS = 2.0
+OVERBUILT_SOCKET_ROOF_FLAT_RADIUS = 2.50
+OVERBUILT_SOCKET_FILL_OVERLAP = 0.20
+
 # ---------------------------------------------------------------------
 # Production-facing French-cleat pipe-hanger helpers
 #
@@ -653,13 +668,94 @@ def create_exact_french_cleat_interface_test():
 
 def make_french_cleat_pipe_hanger():
     """
-    Return the exact 1/2-inch PVC pipe hanger from the reference STEP.
+    Return the overbuilt reference PVC French-cleat hanger with:
 
-    The socket, cleat, retention geometry, and all mating surfaces are
-    preserved exactly as modeled in cleat_example.step.
+      - the original external hanger/cleat geometry unchanged
+      - the ENTIRE straight socket bore opened to 21.40 mm ID
+      - a 45-degree supportless conical roof
+      - a 5 mm diameter final bridge
+      - 2 mm of solid material above the bridge
     """
-    return make_exact_pvc_french_cleat_hanger()
+    hanger = (
+        make_exact_pvc_french_cleat_hanger()
+    )
 
+    roof_end_z = (
+        OVERBUILT_SOCKET_TOP_Z
+        - OVERBUILT_SOCKET_TOP_THICKNESS
+    )
+
+    roof_height = (
+        OVERBUILT_SOCKET_BORE_RADIUS
+        - OVERBUILT_SOCKET_ROOF_FLAT_RADIUS
+    )
+
+    roof_start_z = (
+        roof_end_z
+        - roof_height
+    )
+
+    # IMPORTANT:
+    # The embedded exact hanger still contains its original 21.34 mm bore.
+    # Cut the complete straight section again at the requested 21.40 mm ID.
+    straight_bore = Part.makeCylinder(
+        OVERBUILT_SOCKET_BORE_RADIUS,
+        roof_start_z + 0.2,
+        App.Vector(
+            0,
+            0,
+            -0.1,
+        ),
+    )
+
+    hanger = hanger.cut(
+        straight_bore
+    ).removeSplitter()
+
+    # Restore solid material in the original upper socket cavity before
+    # forming the new supportless roof.
+    fill_radius = (
+        OVERBUILT_SOCKET_BORE_RADIUS
+        + OVERBUILT_SOCKET_FILL_OVERLAP
+    )
+
+    fill = Part.makeCylinder(
+        fill_radius,
+        OVERBUILT_SOCKET_TOP_Z - roof_start_z,
+        App.Vector(
+            0,
+            0,
+            roof_start_z,
+        ),
+    )
+
+    hanger = hanger.fuse(
+        fill
+    ).removeSplitter()
+
+    # Cut the 45-degree internal roof using the SAME 10.70 mm radius,
+    # so the straight bore and roof meet continuously at 21.40 mm ID.
+    roof_cut = Part.makeCone(
+        OVERBUILT_SOCKET_BORE_RADIUS,
+        OVERBUILT_SOCKET_ROOF_FLAT_RADIUS,
+        roof_height,
+        App.Vector(
+            0,
+            0,
+            roof_start_z,
+        ),
+        App.Vector(
+            0,
+            0,
+            1,
+        ),
+    )
+
+    hanger = hanger.cut(
+        roof_cut
+    ).removeSplitter()
+
+    return hanger
 
 def create_french_cleat_pipe_hanger():
     """
