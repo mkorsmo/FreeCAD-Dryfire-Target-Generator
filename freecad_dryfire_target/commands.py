@@ -62,6 +62,22 @@ class ReloadDryFireTargetCommand:
             uspsa_commands
         )
 
+        from freecad_dryfire_target.ipsc import (
+            commands as ipsc_commands,
+            dimensions as ipsc_dimensions,
+            target as ipsc_target,
+        )
+
+        importlib.reload(
+            ipsc_dimensions
+        )
+        importlib.reload(
+            ipsc_target
+        )
+        importlib.reload(
+            ipsc_commands
+        )
+
         from freecad_dryfire_target.steel import (
             commands as steel_commands,
             dimensions as steel_dimensions,

@@ -9,6 +9,9 @@ class DryFireTargetWorkbench(Workbench):
         from freecad_dryfire_target import (
             commands as core_commands,
         )
+        from freecad_dryfire_target.ipsc import (
+            commands as ipsc_commands,
+        )
         from freecad_dryfire_target.steel import (
             commands as steel_commands,
         )
@@ -19,6 +22,11 @@ class DryFireTargetWorkbench(Workbench):
         Gui.addCommand(
             "DryFireTarget_USPSATarget",
             uspsa_commands.CreateUSPSATargetCommand(),
+        )
+
+        Gui.addCommand(
+            "DryFireTarget_IPSCTarget",
+            ipsc_commands.CreateIPSCTargetCommand(),
         )
 
         Gui.addCommand(
@@ -33,6 +41,7 @@ class DryFireTargetWorkbench(Workbench):
 
         commands = [
             "DryFireTarget_USPSATarget",
+            "DryFireTarget_IPSCTarget",
             "DryFireTarget_SteelTarget",
             "Separator",
             "DryFireTarget_Reload",
