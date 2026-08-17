@@ -41,25 +41,60 @@ def scaled_point(
     )
 
 
-def make_polygon_face(
-    points,
+def make_line(
+    x1,
+    y1,
+    x2,
+    y2,
     scale,
 ):
-    vectors = [
+    return Part.makeLine(
         scaled_point(
-            x,
-            y,
+            x1,
+            y1,
             scale,
-        )
-        for x, y in points
-    ]
-
-    vectors.append(
-        vectors[0]
+        ),
+        scaled_point(
+            x2,
+            y2,
+            scale,
+        ),
     )
 
-    wire = Part.makePolygon(
-        vectors
+
+def make_arc(
+    x1,
+    y1,
+    xm,
+    ym,
+    x2,
+    y2,
+    scale,
+):
+    return Part.Arc(
+        scaled_point(
+            x1,
+            y1,
+            scale,
+        ),
+        scaled_point(
+            xm,
+            ym,
+            scale,
+        ),
+        scaled_point(
+            x2,
+            y2,
+            scale,
+        ),
+    ).toShape()
+
+
+def make_face_from_edges(
+    edges,
+):
+    wire = Part.Wire(
+        edges
     )
 
     return Part.Face(
@@ -89,89 +124,16 @@ def make_circle_face(
     )
 
 
-def make_top_cap_face(
-    center_x,
-    bottom_y,
-    radius,
-    total_height,
-    scale,
-):
-    left_x = center_x - radius
-    right_x = center_x + radius
-    arc_side_y = total_height - radius
-
-    left_bottom = scaled_point(
-        left_x,
-        bottom_y,
-        scale,
-    )
-    left_arc_start = scaled_point(
-        left_x,
-        arc_side_y,
-        scale,
-    )
-    arc_top = scaled_point(
-        center_x,
-        total_height,
-        scale,
-    )
-    right_arc_end = scaled_point(
-        right_x,
-        arc_side_y,
-        scale,
-    )
-    right_bottom = scaled_point(
-        right_x,
-        bottom_y,
-        scale,
-    )
-
-    edges = [
-        Part.makeLine(
-            left_bottom,
-            left_arc_start,
-        ),
-        Part.Arc(
-            left_arc_start,
-            arc_top,
-            right_arc_end,
-        ).toShape(),
-        Part.makeLine(
-            right_arc_end,
-            right_bottom,
-        ),
-        Part.makeLine(
-            right_bottom,
-            left_bottom,
-        ),
-    ]
-
-    return Part.Face(
-        Part.Wire(
-            edges
-        )
-    )
-
-
-def fuse_faces(
-    faces,
-):
-    fused = faces[0]
-
-    for face in faces[1:]:
-        fused = fused.fuse(
-            face
-        )
-
-    return fused.removeSplitter()
-
-
 def make_round_plate(
     diameter,
     scale,
     thickness,
 ):
-    radius = diameter * scale / 2
+    radius = (
+        diameter
+        * scale
+        / 2
+    )
 
     return Part.makeCylinder(
         radius,
@@ -189,7 +151,10 @@ def make_square_plate(
     scale,
     thickness,
 ):
-    size = side * scale
+    size = (
+        side
+        * scale
+    )
 
     return Part.makeBox(
         size,
@@ -203,7 +168,7 @@ def make_square_plate(
     )
 
 
-def make_popper_face(
+def make_uspsa_popper_face(
     total_height,
     body_center_y,
     body_radius,
@@ -212,89 +177,161 @@ def make_popper_face(
     stem_join_width,
     scale,
 ):
-    stem_join_half_width = stem_join_width / 2
-
-    lower_join_y = body_center_y - math.sqrt(
-        (body_radius ** 2)
-        - (stem_join_half_width ** 2)
+    stem_base_half_width = (
+        stem_base_width / 2
+    )
+    stem_join_half_width = (
+        stem_join_width / 2
     )
 
-    upper_join_y = body_center_y + math.sqrt(
-        (body_radius ** 2)
-        - (head_radius ** 2)
+    lower_join_y = (
+        body_center_y
+        - math.sqrt(
+            (body_radius ** 2)
+            - (stem_join_half_width ** 2)
+        )
     )
 
-    stem_face = make_polygon_face(
-        [
-            (-stem_base_width / 2, 0),
-            (stem_base_width / 2, 0),
-            (stem_join_half_width, lower_join_y),
-            (-stem_join_half_width, lower_join_y),
-        ],
-        scale,
+    upper_join_y = (
+        body_center_y
+        + math.sqrt(
+            (body_radius ** 2)
+            - (head_radius ** 2)
+        )
     )
 
-    body_face = make_circle_face(
-        0,
-        body_center_y,
-        body_radius,
-        scale,
+    head_arc_start_y = (
+        total_height
+        - head_radius
     )
 
-    top_face = make_top_cap_face(
-        center_x=0,
-        bottom_y=upper_join_y,
-        radius=head_radius,
-        total_height=total_height,
-        scale=scale,
+    edges = [
+        make_line(
+            -stem_base_half_width,
+            0,
+            stem_base_half_width,
+            0,
+            scale,
+        ),
+        make_line(
+            stem_base_half_width,
+            0,
+            stem_join_half_width,
+            lower_join_y,
+            scale,
+        ),
+        make_arc(
+            stem_join_half_width,
+            lower_join_y,
+            body_radius,
+            body_center_y,
+            head_radius,
+            upper_join_y,
+            scale,
+        ),
+        make_line(
+            head_radius,
+            upper_join_y,
+            head_radius,
+            head_arc_start_y,
+            scale,
+        ),
+        make_arc(
+            head_radius,
+            head_arc_start_y,
+            0,
+            total_height,
+            -head_radius,
+            head_arc_start_y,
+            scale,
+        ),
+        make_line(
+            -head_radius,
+            head_arc_start_y,
+            -head_radius,
+            upper_join_y,
+            scale,
+        ),
+        make_arc(
+            -head_radius,
+            upper_join_y,
+            -body_radius,
+            body_center_y,
+            -stem_join_half_width,
+            lower_join_y,
+            scale,
+        ),
+        make_line(
+            -stem_join_half_width,
+            lower_join_y,
+            -stem_base_half_width,
+            0,
+            scale,
+        ),
+    ]
+
+    return make_face_from_edges(
+        edges
     )
 
-    return fuse_faces(
-        [
-            stem_face,
-            body_face,
-            top_face,
-        ]
-    )
 
-
-def make_mini_popper_face(
-    total_height,
+def make_uspsa_mini_popper_face(
     body_center_y,
     body_radius,
     stem_base_width,
     stem_join_width,
     scale,
 ):
-    stem_join_half_width = stem_join_width / 2
-
-    lower_join_y = body_center_y - math.sqrt(
-        (body_radius ** 2)
-        - (stem_join_half_width ** 2)
+    stem_base_half_width = (
+        stem_base_width / 2
+    )
+    stem_join_half_width = (
+        stem_join_width / 2
     )
 
-    stem_face = make_polygon_face(
-        [
-            (-stem_base_width / 2, 0),
-            (stem_base_width / 2, 0),
-            (stem_join_half_width, lower_join_y),
-            (-stem_join_half_width, lower_join_y),
-        ],
-        scale,
+    lower_join_y = (
+        body_center_y
+        - math.sqrt(
+            (body_radius ** 2)
+            - (stem_join_half_width ** 2)
+        )
     )
 
-    body_face = make_circle_face(
-        0,
-        body_center_y,
-        body_radius,
-        scale,
-    )
+    edges = [
+        make_line(
+            -stem_base_half_width,
+            0,
+            stem_base_half_width,
+            0,
+            scale,
+        ),
+        make_line(
+            stem_base_half_width,
+            0,
+            stem_join_half_width,
+            lower_join_y,
+            scale,
+        ),
+        make_arc(
+            stem_join_half_width,
+            lower_join_y,
+            0,
+            body_center_y + body_radius,
+            -stem_join_half_width,
+            lower_join_y,
+            scale,
+        ),
+        make_line(
+            -stem_join_half_width,
+            lower_join_y,
+            -stem_base_half_width,
+            0,
+            scale,
+        ),
+    ]
 
-    return fuse_faces(
-        [
-            stem_face,
-            body_face,
-        ]
+    return make_face_from_edges(
+        edges
     )
 
 
@@ -302,7 +339,7 @@ def make_uspsa_popper(
     scale,
     thickness,
 ):
-    face = make_popper_face(
+    face = make_uspsa_popper_face(
         total_height=USPSA_POPPER_TOTAL_HEIGHT,
         body_center_y=USPSA_POPPER_BODY_CENTER_Y,
         body_radius=USPSA_POPPER_BODY_RADIUS,
@@ -325,8 +362,7 @@ def make_uspsa_mini_popper(
     scale,
     thickness,
 ):
-    face = make_mini_popper_face(
-        total_height=USPSA_MINI_POPPER_TOTAL_HEIGHT,
+    face = make_uspsa_mini_popper_face(
         body_center_y=USPSA_MINI_POPPER_BODY_CENTER_Y,
         body_radius=USPSA_MINI_POPPER_BODY_RADIUS,
         stem_base_width=USPSA_MINI_POPPER_STEM_BASE_WIDTH,
@@ -413,18 +449,27 @@ def create_steel_target(
         "Steel_Target",
     )
 
-    target.Label = target_info["label"]
+    target.Label = (
+        target_info["label"]
+    )
+
     target.Shape = make_steel_target(
         target_type=target_type,
         scale=scale,
         thickness=thickness,
     )
 
-    target.ViewObject.ShapeColor = STEEL_COLOR
+    target.ViewObject.ShapeColor = (
+        STEEL_COLOR
+    )
 
     document.recompute()
 
-    view = Gui.activeDocument().activeView()
+    view = (
+        Gui.activeDocument()
+        .activeView()
+    )
+
     view.viewTop()
     view.fitAll()
 
