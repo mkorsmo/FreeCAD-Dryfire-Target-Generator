@@ -136,7 +136,7 @@ The cardboard and hard-cover face layers are placed at the build-plate side of t
 
 When exporting a hard-cover target, keep the generated parts aligned and import them into the slicer together as parts of the same object.
 
-## Mounts
+## Mounts (WIP)
 
 USPSA and IPSC cardboard targets can optionally include a back-mounted snap clip for nominal 1/2-inch PVC.
 
@@ -151,6 +151,11 @@ Vertical 1/2" PVC
 Targets with mounts are generated with the scoring face oriented appropriately and the clip geometry fused to the back of the target.
 
 Hard-cover targets keep the face layers separate while the mount is fused into the structural back.
+
+## Tabletop Stand Generator (HEAVY WIP)
+
+Generate a tabletop stand using a base, a hanger and "french cleat" style mounts on the back of the targets.
+
 
 ## Installation
 
