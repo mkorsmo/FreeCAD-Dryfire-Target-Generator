@@ -1,3 +1,4 @@
+import FreeCAD as App
 import FreeCADGui as Gui
 
 from freecad_dryfire_target.dialog import (
@@ -13,12 +14,32 @@ from freecad_dryfire_target.ipsc.dimensions import (
     TARGET_WIDTH,
 )
 
+from freecad_dryfire_target.ipsc.hardcover import (
+    create_classic_2_target,
+    create_classic_3_target,
+)
+
 from freecad_dryfire_target.ipsc.target import (
     MOUNT_NONE,
     MOUNT_VERTICAL_PVC,
     create_target,
 )
 
+
+TARGET_TYPES = [
+    (
+        "Standard IPSC",
+        "standard",
+    ),
+    (
+        "Classic Hardcover V2 - Diagonal Right",
+        "classic_2",
+    ),
+    (
+        "Classic Hardcover V3 - Diagonal Left",
+        "classic_3",
+    ),
+]
 
 MOUNT_TYPES = [
     (
@@ -31,6 +52,12 @@ MOUNT_TYPES = [
     ),
 ]
 
+TARGET_CREATORS = {
+    "standard": create_target,
+    "classic_2": create_classic_2_target,
+    "classic_3": create_classic_3_target,
+}
+
 
 def show_target_dialog():
     dialog = TargetSettingsDialog(
@@ -41,6 +68,7 @@ def show_target_dialog():
         default_thickness=DEFAULT_THICKNESS,
         default_groove_width=DEFAULT_GROOVE_WIDTH,
         default_groove_depth=DEFAULT_GROOVE_DEPTH,
+        target_types=TARGET_TYPES,
         mount_types=MOUNT_TYPES,
         parent=Gui.getMainWindow(),
     )
@@ -52,7 +80,26 @@ def show_target_dialog():
         dialog.get_settings()
     )
 
-    create_target(
+    target_type = settings[
+        "target_type"
+    ]
+
+    creator = TARGET_CREATORS.get(
+        target_type
+    )
+
+    if creator is None:
+        App.Console.PrintError(
+            f"Unknown IPSC target type: {target_type}\n"
+        )
+        return
+
+    if target_type != "standard":
+        App.Console.PrintMessage(
+            "Hard cover target uses face-down split parts.\n"
+        )
+
+    creator(
         scale=settings["scale"],
         thickness=settings["thickness"],
         groove_width=settings[
@@ -73,7 +120,7 @@ class CreateIPSCTargetCommand:
             ),
             "ToolTip": (
                 "Create a scaled IPSC "
-                "cardboard dry fire target"
+                "dry fire target"
             ),
         }
 
