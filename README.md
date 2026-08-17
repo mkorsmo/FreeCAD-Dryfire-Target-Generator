@@ -2,14 +2,15 @@
 
 A FreeCAD workbench for generating parametric, 3D-printable dry-fire targets.
 
-The project replaces fixed PDF/image-based dry-fire targets with actual CAD geometry. Targets can be generated at common reduced scales, custom scales, or sized to simulate a greater shooting distance while keeping the target at a practical indoor distance.
+The project started as a way to replace fixed PDF/image-based dry-fire targets with actual CAD geometry. Targets can be generated at common reduced scales, custom scales, or sized to simulate a greater shooting distance while keeping the target at a practical indoor distance.
 
-Current target support is focused on USPSA cardboard targets, including scoring zones, common hard-cover configurations, and optional snap-on mounting for nominal 1/2-inch PVC.
+Current support includes USPSA cardboard targets, IPSC Classic cardboard targets, common hard-cover patterns, and several steel target shapes.
 
 ## Features
 
 - Native FreeCAD workbench: **Dry Fire Targets**
 - Parametric USPSA cardboard target geometry
+- Parametric IPSC Classic cardboard target geometry
 - A, C, and D scoring-zone grooves
 - Common scale presets:
   - 1/2 scale
@@ -21,14 +22,11 @@ Current target support is focused on USPSA cardboard targets, including scoring 
   - target thickness
   - scoring-groove width
   - scoring-groove depth
-- Multiple USPSA hard-cover patterns
+- USPSA hard-cover target patterns
+- IPSC Classic hard-cover target patterns
 - Face-down multipart construction for hard-cover targets
-- Optional reinforced snap-on mount for nominal 1/2-inch PVC
-- Configurable PVC clip layouts:
-  - Top + Bottom
-  - Top
-  - Middle
-  - Bottom
+- Steel target generator
+- Optional vertical 1/2-inch PVC snap-clip mounts for cardboard targets
 - Reload command for faster development without restarting FreeCAD for normal Python-module changes
 
 ## USPSA Target Types
@@ -47,11 +45,9 @@ The USPSA generator currently includes:
 | Hard Cover V7 | Left-side half of the Tuxedo pattern |
 | Center Stripe | Centered 2-inch / 50.8 mm hard-cover stripe |
 
-All target types are selected from a single **Create USPSA Target** dialog.
+All USPSA cardboard target types are selected from a single **Create USPSA Target** dialog.
 
-## Scaling
-
-The full-size target geometry is defined as 450 × 750 mm.
+The full-size USPSA target geometry is defined as 450 × 750 mm.
 
 Common generated sizes are:
 
@@ -61,14 +57,63 @@ Common generated sizes are:
 | 1/3 | 150 × 250 mm |
 | 1/4 | 112.5 × 187.5 mm |
 
+## IPSC Classic Target Types
+
+The IPSC generator currently includes:
+
+| Target | Description |
+| --- | --- |
+| Standard IPSC | Standard IPSC Classic cardboard target with A, C, and D scoring grooves |
+| Classic Hardcover V2 | Diagonal right hard cover |
+| Classic Hardcover V3 | Diagonal left hard cover |
+
+The full-size IPSC Classic target geometry is defined as 450 × 570 mm and includes the 5 mm non-scoring border.
+
+All IPSC target types are selected from a single **Create IPSC Target** dialog.
+
+Additional IPSC Classic hard-cover variants are planned.
+
+## Steel Targets
+
+The steel generator currently includes:
+
+### Round Plates
+
+- 8-inch round plate
+- 10-inch round plate
+- 12-inch round plate
+
+### Square Plates
+
+- 6-inch square plate
+- 8-inch square plate
+- 10-inch square plate
+- 12-inch square plate
+
+### Poppers
+
+- USPSA Popper
+- USPSA Mini-Popper
+
+The popper silhouettes are generated from dimensional target geometry rather than approximated image tracing.
+
+Steel targets use the same scale options as the cardboard generators and are created from the **Create Steel Target** dialog.
+
+## Scaling
+
+The generators can create targets using preset scales or a calculated simulated-distance scale.
+
 ### Simulated Distance
 
-The generator can calculate scale based on an actual shooting distance and a desired simulated distance.
+Scale is calculated as:
+
+```text
+scale = actual distance / simulated distance
+```
 
 For example, placing a target at 10 feet and asking it to represent a target at 30 feet produces:
 
 ```text
-scale = actual distance / simulated distance
 scale = 10 / 30
 scale = 1/3
 ```
@@ -85,49 +130,27 @@ Instead of simply placing black geometry on top of a finished target, the genera
 - the exposed cardboard face
 - the hard-cover face
 
-Scoring grooves are cut only into exposed cardboard areas.
+Scoring grooves are cut only into the exposed cardboard areas. Scoring lines underneath hard cover are therefore not printed into the visible hard-cover surface.
 
-This lets the target print with the visible face against the build plate while preserving separate cardboard and hard-cover regions for slicer assignment.
+The cardboard and hard-cover face layers are placed at the build-plate side of the model, with the structural back above them. This makes it possible to assign separate materials or colors in the slicer while keeping the target aligned as one multipart object.
 
 When exporting a hard-cover target, keep the generated parts aligned and import them into the slicer together as parts of the same object.
 
-## 1/2-Inch PVC Mount
+## Mounts
 
-Targets can optionally be generated with reinforced snap clips for nominal 1/2-inch PVC pipe.
+USPSA and IPSC cardboard targets can optionally include a back-mounted snap clip for nominal 1/2-inch PVC.
 
-The clip is designed around a nominal 1/2-inch PVC outside diameter of approximately 21.34 mm. The clip geometry stays at its real physical size regardless of target scale.
+The mount geometry is kept at physical size regardless of target scale. Only the mount positions are scaled with the target.
 
-The current V1 clip uses:
-
-- 0.40 mm diametral clearance
-- 20 mm clip length
-- 2.6 mm arm thickness
-- 2.0 mm mounting pad
-- 1.0 mm retaining-hook projection
-- full-height tapered external gussets
-
-The mount is designed to print as part of the target without support while the visible target face remains against the build plate.
-
-### Clip Layout
-
-The generator currently supports four layouts:
-
-| Layout | Description |
-| --- | --- |
-| Top + Bottom | Two clips; the default and most rigid layout |
-| Top | Single clip in the same upper position used by Top + Bottom |
-| Middle | Single centered clip |
-| Bottom | Single clip in the same lower position used by Top + Bottom |
-
-At full scale, the current USPSA clip positions are:
+The current mount option is:
 
 ```text
-Top:       450 mm
-Middle:    300 mm
-Bottom:    150 mm
+Vertical 1/2" PVC
 ```
 
-These positions scale with the target, while the clip itself does not.
+Targets with mounts are generated with the scoring face oriented appropriately and the clip geometry fused to the back of the target.
+
+Hard-cover targets keep the face layers separate while the mount is fused into the structural back.
 
 ## Installation
 
@@ -162,15 +185,17 @@ Restart FreeCAD after initially installing the workbench or after changing `Init
 
 1. Start FreeCAD.
 2. Select **Dry Fire Targets** from the workbench selector.
-3. Click **Create USPSA Target**.
+3. Choose one of:
+   - **Create USPSA Target**
+   - **Create IPSC Target**
+   - **Create Steel Target**
 4. Select the desired target type.
-5. Optionally select **Vertical 1/2" PVC** as the back mount.
-6. If using the PVC mount, choose a clip layout.
-7. Choose a scale preset, custom scale, or simulated-distance mode.
-8. Adjust print geometry if needed.
-9. Click **OK** to generate the target.
+5. Choose a scale preset, custom scale, or simulated-distance mode.
+6. Adjust print geometry if needed.
+7. Select a mount option when available.
+8. Click **OK** to generate the target.
 
-The default target settings are:
+The default cardboard target settings are:
 
 ```text
 Scale:         1/3
@@ -179,17 +204,17 @@ Groove width:  0.6 mm
 Groove depth:  0.3 mm
 ```
 
-A 1/3-scale USPSA target is approximately 150 × 250 mm.
-
 ## Printing
 
 The generated geometry is intended for normal FDM printing.
 
-Hard-cover targets and targets with PVC mounts are constructed for **face-down printing**. The visible cardboard/hard-cover face is placed against the build plate, while the structural backing and mount geometry build upward.
+Standard cardboard and steel targets are generated as single parts.
+
+Hard-cover targets are specifically constructed for **face-down printing**. The cardboard and hard-cover face geometry is placed against the build plate, with the structural backing above it.
+
+Mounted targets include the mount geometry on the back of the target.
 
 Because printer tolerances, first-layer behavior, filament, and slicer settings vary, inspect the sliced model before printing.
-
-The PVC snap fit has been designed around the dimensions above, but printer calibration and material choice can affect fit and flexibility.
 
 ## Project Structure
 
@@ -200,7 +225,19 @@ FreeCAD-Dryfire-Target-Generator/
 │   ├── dialog.py
 │   ├── geometry.py
 │   ├── mounts.py
+│   ├── stands.py
 │   ├── __init__.py
+│   ├── ipsc/
+│   │   ├── commands.py
+│   │   ├── dimensions.py
+│   │   ├── hardcover.py
+│   │   ├── __init__.py
+│   │   └── target.py
+│   ├── steel/
+│   │   ├── commands.py
+│   │   ├── dimensions.py
+│   │   ├── __init__.py
+│   │   └── target.py
 │   └── uspsa/
 │       ├── commands.py
 │       ├── dimensions.py
@@ -213,35 +250,39 @@ FreeCAD-Dryfire-Target-Generator/
 └── README.md
 ```
 
-The code is intentionally split so that generic workbench/UI/geometry functionality stays separate from USPSA-specific geometry.
+The code is intentionally split so that generic workbench, UI, mount, and geometry functionality stays separate from target-family-specific geometry.
 
 - `geometry.py` contains reusable geometry helpers.
-- `mounts.py` contains reusable physical mount geometry.
-- `dialog.py` contains the generic target settings dialog.
-- `uspsa/dimensions.py` contains USPSA dimensions and defaults.
-- `uspsa/target.py` builds the standard target, scoring geometry, and USPSA mount placement.
-- `uspsa/hardcover.py` contains hard-cover masks and multipart target construction.
-- `uspsa/commands.py` connects USPSA target and mount choices to the FreeCAD UI.
+- `dialog.py` contains the generic cardboard target settings dialog.
+- `mounts.py` contains reusable target-mount geometry.
+- `stands.py` contains reusable target-stand geometry.
+- `uspsa/` contains USPSA cardboard target geometry, hard-cover masks, and commands.
+- `ipsc/` contains IPSC Classic cardboard target geometry, hard-cover masks, and commands.
+- `steel/` contains steel plate and popper geometry and commands.
 
-This structure is intended to make additional target families and mounting systems easier to add without turning the USPSA implementation into one large module.
+This structure is intended to make additional target families easier to add without turning any one implementation into a large monolithic module.
 
 ## Development
 
 The project is actively evolving.
 
-Potential future work includes:
+Current areas of development include:
 
-- replaceable/removable PVC clip cartridges
-- additional mount orientations
+- additional IPSC Classic hard-cover variants
 - additional target families
-- no-shoot targets
-- other dry-fire training geometry
+- mounting and quick-change systems
+- reusable stands
+- slicer-friendly export workflows
 
-The **Reload Dry Fire Targets** command reloads the Python modules used by the workbench, which is useful while editing target geometry. Changes to `InitGui.py` generally require restarting FreeCAD.
+The **Reload Dry Fire Targets** command reloads the Python modules used by the workbench, which is useful while editing target geometry.
+
+Changes to `InitGui.py` generally require restarting FreeCAD.
 
 ## Safety
 
-These are dry-fire training aids only. Follow normal firearm-safety practices during dry-fire training, including maintaining a safe direction and keeping live ammunition out of the training area.
+These are dry-fire training aids only.
+
+Follow normal firearm-safety practices during dry-fire training, including maintaining a safe direction and keeping live ammunition out of the training area.
 
 ## License
 
@@ -251,4 +292,4 @@ Copyright © 2026 Matthew Korsmo.
 
 ## Disclaimer
 
-This is an independent project and is not affiliated with or endorsed by USPSA.
+This is an independent project and is not affiliated with or endorsed by USPSA or IPSC.
