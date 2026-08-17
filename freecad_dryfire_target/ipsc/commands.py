@@ -14,8 +14,22 @@ from freecad_dryfire_target.ipsc.dimensions import (
 )
 
 from freecad_dryfire_target.ipsc.target import (
+    MOUNT_NONE,
+    MOUNT_VERTICAL_PVC,
     create_target,
 )
+
+
+MOUNT_TYPES = [
+    (
+        "None",
+        MOUNT_NONE,
+    ),
+    (
+        'Vertical 1/2" PVC',
+        MOUNT_VERTICAL_PVC,
+    ),
+]
 
 
 def show_target_dialog():
@@ -27,6 +41,7 @@ def show_target_dialog():
         default_thickness=DEFAULT_THICKNESS,
         default_groove_width=DEFAULT_GROOVE_WIDTH,
         default_groove_depth=DEFAULT_GROOVE_DEPTH,
+        mount_types=MOUNT_TYPES,
         parent=Gui.getMainWindow(),
     )
 
@@ -46,6 +61,7 @@ def show_target_dialog():
         groove_depth=settings[
             "groove_depth"
         ],
+        mount=settings["mount"],
     )
 
 

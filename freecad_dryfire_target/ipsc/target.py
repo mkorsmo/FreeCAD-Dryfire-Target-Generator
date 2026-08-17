@@ -8,6 +8,10 @@ from freecad_dryfire_target.geometry import (
     make_polyline_groove,
 )
 
+from freecad_dryfire_target.mounts import (
+    make_vertical_pvc_clips,
+)
+
 from freecad_dryfire_target.ipsc.dimensions import (
     A_BOUNDARY,
     C_D_BOTTOM_LEFT,
@@ -22,6 +26,7 @@ from freecad_dryfire_target.ipsc.dimensions import (
     DEFAULT_SCALE,
     DEFAULT_THICKNESS,
     NON_SCORING_BORDER,
+    TARGET_HEIGHT,
     TARGET_OUTLINE,
 )
 
@@ -31,6 +36,30 @@ TARGET_COLOR = (
     0.56,
     0.32,
 )
+
+MOUNT_NONE = "none"
+MOUNT_VERTICAL_PVC = "vertical_pvc"
+
+
+# Define mount locations from the TOP of the target.
+#
+# FreeCAD target coordinates use Y=0 at the bottom, so convert the
+# desired distance down from the top into the corresponding Y value.
+TOP_CLIP_FROM_TOP = TARGET_HEIGHT * 0.25
+BOTTOM_CLIP_FROM_TOP = TARGET_HEIGHT * 0.75
+
+VERTICAL_PVC_CLIP_POSITIONS = [
+    (
+        0.0,
+        TARGET_HEIGHT
+        - TOP_CLIP_FROM_TOP,
+    ),
+    (
+        0.0,
+        TARGET_HEIGHT
+        - BOTTOM_CLIP_FROM_TOP,
+    ),
+]
 
 
 def line_intersection(
@@ -267,26 +296,108 @@ def make_scored_target_shape(
     )
 
 
+def make_target_mount(
+    mount,
+    scale,
+    thickness,
+):
+    if mount in (
+        None,
+        MOUNT_NONE,
+    ):
+        return None
+
+    if mount == MOUNT_VERTICAL_PVC:
+        clip_positions = [
+            (
+                x * scale,
+                y * scale,
+            )
+            for x, y in (
+                VERTICAL_PVC_CLIP_POSITIONS
+            )
+        ]
+
+        return make_vertical_pvc_clips(
+            positions=clip_positions,
+            z_offset=thickness,
+        )
+
+    raise ValueError(
+        f"Unknown IPSC mount type: {mount}"
+    )
+
+
 def create_target(
     scale=DEFAULT_SCALE,
     thickness=DEFAULT_THICKNESS,
     groove_width=DEFAULT_GROOVE_WIDTH,
     groove_depth=DEFAULT_GROOVE_DEPTH,
     include_perimeter=DEFAULT_INCLUDE_PERIMETER,
+    mount=MOUNT_NONE,
 ):
     document = App.newDocument(
         "IPSC_DryFire_Target"
     )
 
-    target_shape = (
-        make_scored_target_shape(
+    if mount == MOUNT_NONE:
+        target_shape = (
+            make_scored_target_shape(
+                scale,
+                thickness,
+                groove_width,
+                groove_depth,
+                include_perimeter=include_perimeter,
+            )
+        )
+
+        view_face = "top"
+
+    else:
+        target_shape = (
+            make_target_outline(
+                scale,
+                thickness,
+            )
+        )
+
+        target_shape = add_scoring_grooves(
+            target_shape,
             scale,
             thickness,
             groove_width,
             groove_depth,
             include_perimeter=include_perimeter,
+            face="bottom",
         )
-    )
+
+        mount_shape = make_target_mount(
+            mount,
+            scale,
+            thickness,
+        )
+
+        target_shape = (
+            target_shape.fuse(
+                mount_shape
+            ).removeSplitter()
+        )
+
+        target_shape.rotate(
+            App.Vector(
+                0,
+                0,
+                0,
+            ),
+            App.Vector(
+                0,
+                0,
+                1,
+            ),
+            180,
+        )
+
+        view_face = "bottom"
 
     target = document.addObject(
         "Part::Feature",
@@ -310,7 +421,11 @@ def create_target(
         .activeView()
     )
 
-    view.viewTop()
+    if view_face == "bottom":
+        view.viewBottom()
+    else:
+        view.viewTop()
+
     view.fitAll()
 
     return target
