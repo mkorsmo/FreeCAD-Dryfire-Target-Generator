@@ -6,12 +6,24 @@ class DryFireTargetWorkbench(Workbench):
     ToolTip = "Generate scaled dry fire targets"
 
     def Initialize(self):
-        from freecad_dryfire_target import commands as core_commands
-        from freecad_dryfire_target.uspsa import commands as uspsa_commands
+        from freecad_dryfire_target import (
+            commands as core_commands,
+        )
+        from freecad_dryfire_target.steel import (
+            commands as steel_commands,
+        )
+        from freecad_dryfire_target.uspsa import (
+            commands as uspsa_commands,
+        )
 
         Gui.addCommand(
             "DryFireTarget_USPSATarget",
             uspsa_commands.CreateUSPSATargetCommand(),
+        )
+
+        Gui.addCommand(
+            "DryFireTarget_SteelTarget",
+            steel_commands.CreateSteelTargetCommand(),
         )
 
         Gui.addCommand(
@@ -21,6 +33,7 @@ class DryFireTargetWorkbench(Workbench):
 
         commands = [
             "DryFireTarget_USPSATarget",
+            "DryFireTarget_SteelTarget",
             "Separator",
             "DryFireTarget_Reload",
         ]
@@ -39,4 +52,6 @@ class DryFireTargetWorkbench(Workbench):
         return "Gui::PythonWorkbench"
 
 
-Gui.addWorkbench(DryFireTargetWorkbench())
+Gui.addWorkbench(
+    DryFireTargetWorkbench()
+)

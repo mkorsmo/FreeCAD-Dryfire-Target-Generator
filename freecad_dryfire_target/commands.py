@@ -6,28 +6,77 @@ import FreeCAD as App
 class ReloadDryFireTargetCommand:
     def GetResources(self):
         return {
-            "MenuText": "Reload Dry Fire Targets",
-            "ToolTip": "Reload Dry Fire Targets Python modules",
+            "MenuText": "Reload",
+            "ToolTip": (
+                "Reload Dry Fire Targets "
+                "Python modules"
+            ),
         }
 
     def Activated(self):
-        from freecad_dryfire_target import dialog
-        from freecad_dryfire_target import geometry
-        from freecad_dryfire_target import mounts
+        from freecad_dryfire_target import (
+            dialog,
+            geometry,
+            mounts,
+        )
 
-        from freecad_dryfire_target.uspsa import commands
-        from freecad_dryfire_target.uspsa import dimensions
-        from freecad_dryfire_target.uspsa import hardcover
-        from freecad_dryfire_target.uspsa import target
+        importlib.reload(
+            geometry
+        )
+        importlib.reload(
+            mounts
+        )
+        importlib.reload(
+            dialog
+        )
 
-        importlib.reload(geometry)
-        importlib.reload(dialog)
-        importlib.reload(mounts)
+        try:
+            from freecad_dryfire_target import (
+                stands,
+            )
 
-        importlib.reload(dimensions)
-        importlib.reload(target)
-        importlib.reload(hardcover)
-        importlib.reload(commands)
+            importlib.reload(
+                stands
+            )
+
+        except ImportError:
+            pass
+
+        from freecad_dryfire_target.uspsa import (
+            commands as uspsa_commands,
+            dimensions as uspsa_dimensions,
+            hardcover as uspsa_hardcover,
+            target as uspsa_target,
+        )
+
+        importlib.reload(
+            uspsa_dimensions
+        )
+        importlib.reload(
+            uspsa_target
+        )
+        importlib.reload(
+            uspsa_hardcover
+        )
+        importlib.reload(
+            uspsa_commands
+        )
+
+        from freecad_dryfire_target.steel import (
+            commands as steel_commands,
+            dimensions as steel_dimensions,
+            target as steel_target,
+        )
+
+        importlib.reload(
+            steel_dimensions
+        )
+        importlib.reload(
+            steel_target
+        )
+        importlib.reload(
+            steel_commands
+        )
 
         App.Console.PrintMessage(
             "Dry Fire Targets modules reloaded.\n"
